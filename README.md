@@ -1,21 +1,10 @@
-# :package_description
+Project Essentials is a lightweight Laravel package that provides commonly used UI components, configuration and migrations to help bootstrap new projects quickly. It offers publishable views and a small set of reusable Blade components (for example, a progress indicator) that are easy to customize through component props or by publishing and editing the package views/config.
 
-[![Latest Version on Packagist](https://img.shields.io/packagist/v/codenzia/project-essentials.svg?style=flat-square)](https://packagist.org/packages/codenzia/project-essentials)
-[![GitHub Tests Action Status](https://img.shields.io/github/actions/workflow/status/codenzia/project-essentials/run-tests.yml?branch=main&label=tests&style=flat-square)](https://github.com/codenzia/project-essentials/actions?query=workflow%3Arun-tests+branch%3Amain)
-[![GitHub Code Style Action Status](https://img.shields.io/github/actions/workflow/status/codenzia/project-essentials/fix-php-code-style-issues.yml?branch=main&label=code%20style&style=flat-square)](https://github.com/codenzia/project-essentials/actions?query=workflow%3A"Fix+PHP+code+styling"+branch%3Amain)
-[![Total Downloads](https://img.shields.io/packagist/dt/codenzia/project-essentials.svg?style=flat-square)](https://packagist.org/packages/codenzia/project-essentials)
+Use the included components directly in your Blade templates or publish the views/config to adapt them to your project's style. Example usage:
 
-<!--delete-->
----
-This repo can be used to scaffold a Filament plugin. Follow these steps to get started:
-
-1. Press the "Use this template" button at the top of this repo to create a new repo with the contents of this skeleton.
-2. Run "php ./configure.php" to run a script that will replace all placeholders throughout all the files.
-3. Make something great!
----
-<!--/delete-->
-
-This is where your description should go. Limit it to a paragraph or two. Consider adding a small example.
+```blade
+<x-project-essentials::progress :progress="$progress" color="primary" :label="false" />
+```
 
 ## Installation
 
