@@ -1,7 +1,10 @@
 <?php
 
-namespace VendorName\Skeleton;
+namespace Codenzia\ProjectEssentials;
 
+use Codenzia\ProjectEssentials\Commands\ProjectEssentialsCommand;
+use Codenzia\ProjectEssentials\Testing\TestsProjectEssentials;
+use Codenzia\ProjectEssentials\View\Components\Progress;
 use Filament\Support\Assets\AlpineComponent;
 use Filament\Support\Assets\Asset;
 use Filament\Support\Assets\Css;
@@ -13,22 +16,16 @@ use Livewire\Features\SupportTesting\Testable;
 use Spatie\LaravelPackageTools\Commands\InstallCommand;
 use Spatie\LaravelPackageTools\Package;
 use Spatie\LaravelPackageTools\PackageServiceProvider;
-use VendorName\Skeleton\Commands\SkeletonCommand;
-use VendorName\Skeleton\Testing\TestsSkeleton;
+use Illuminate\Support\Facades\Blade;
 
-class SkeletonServiceProvider extends PackageServiceProvider
+class ProjectEssentialsServiceProvider extends PackageServiceProvider
 {
-    public static string $name = 'skeleton';
+    public static string $name = 'project-essentials';
 
-    public static string $viewNamespace = 'skeleton';
+    public static string $viewNamespace = 'project-essentials';
 
     public function configurePackage(Package $package): void
     {
-        /*
-         * This class is a Package Service Provider
-         *
-         * More info: https://github.com/spatie/laravel-package-tools
-         */
         $package->name(static::$name)
             ->hasCommands($this->getCommands())
             ->hasInstallCommand(function (InstallCommand $command) {
@@ -36,7 +33,7 @@ class SkeletonServiceProvider extends PackageServiceProvider
                     ->publishConfigFile()
                     ->publishMigrations()
                     ->askToRunMigrations()
-                    ->askToStarRepoOnGitHub(':vendor_slug/:package_slug');
+                    ->askToStarRepoOnGitHub('codenzia/project-essentials');
             });
 
         $configFileName = $package->shortName();
@@ -58,10 +55,25 @@ class SkeletonServiceProvider extends PackageServiceProvider
         }
     }
 
+    public function boot(): void
+    {
+        // Ensure the real path to views is registered with the namespace
+        $this->loadViewsFrom(__DIR__ . '/../resources/views', 'project-essentials');
+
+        // Map component classes under the same namespace so <x-project-essentials::progress> uses the class
+        Blade::componentNamespace('Codenzia\\ProjectEssentials\\View\\Components', 'project-essentials');
+
+        // Optionally register short-named components:
+        $this->loadViewComponentsAs('project-essentials', [
+            Progress::class,
+        ]);
+    }
+
     public function packageRegistered(): void {}
 
     public function packageBooted(): void
     {
+        parent::packageBooted();
         // Asset Registration
         FilamentAsset::register(
             $this->getAssets(),
@@ -80,18 +92,18 @@ class SkeletonServiceProvider extends PackageServiceProvider
         if (app()->runningInConsole()) {
             foreach (app(Filesystem::class)->files(__DIR__ . '/../stubs/') as $file) {
                 $this->publishes([
-                    $file->getRealPath() => base_path("stubs/skeleton/{$file->getFilename()}"),
-                ], 'skeleton-stubs');
+                    $file->getRealPath() => base_path("stubs/project-essentials/{$file->getFilename()}"),
+                ], 'project-essentials-stubs');
             }
         }
 
         // Testing
-        Testable::mixin(new TestsSkeleton);
+        Testable::mixin(new TestsProjectEssentials);
     }
 
     protected function getAssetPackageName(): ?string
     {
-        return ':vendor_slug/:package_slug';
+        return 'codenzia/project-essentials';
     }
 
     /**
@@ -100,9 +112,9 @@ class SkeletonServiceProvider extends PackageServiceProvider
     protected function getAssets(): array
     {
         return [
-            // AlpineComponent::make('skeleton', __DIR__ . '/../resources/dist/components/skeleton.js'),
-            Css::make('skeleton-styles', __DIR__ . '/../resources/dist/skeleton.css'),
-            Js::make('skeleton-scripts', __DIR__ . '/../resources/dist/skeleton.js'),
+            // AlpineComponent::make('project-essentialst', __DIR__ . '/../resources/dist/components/project-essentialst.js'),
+            // Css::make('project-essentialst-styles', __DIR__ . '/../resources/dist/project-essentialst.css'),
+            // Js::make('project-essentialst-scripts', __DIR__ . '/../resources/dist/project-essentialst.js'),
         ];
     }
 
@@ -112,7 +124,7 @@ class SkeletonServiceProvider extends PackageServiceProvider
     protected function getCommands(): array
     {
         return [
-            SkeletonCommand::class,
+            ProjectEssentialsCommand::class,
         ];
     }
 
@@ -146,7 +158,7 @@ class SkeletonServiceProvider extends PackageServiceProvider
     protected function getMigrations(): array
     {
         return [
-            'create_skeleton_table',
+            'create_project-essentials_table',
         ];
     }
 }

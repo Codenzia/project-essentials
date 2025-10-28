@@ -1,15 +1,15 @@
 <?php
 
-namespace VendorName\Skeleton;
+namespace Codenzia\ProjectEssentials;
 
 use Filament\Contracts\Plugin;
 use Filament\Panel;
 
-class SkeletonPlugin implements Plugin
+class ProjectEssentialsPlugin implements Plugin
 {
     public function getId(): string
     {
-        return 'skeleton';
+        return 'project-essentials';
     }
 
     public function register(Panel $panel): void
@@ -25,13 +25,5 @@ class SkeletonPlugin implements Plugin
     public static function make(): static
     {
         return app(static::class);
-    }
-
-    public static function get(): static
-    {
-        /** @var static $plugin */
-        $plugin = filament(app(static::class)->getId());
-
-        return $plugin;
     }
 }
