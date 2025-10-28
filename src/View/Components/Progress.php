@@ -24,7 +24,7 @@ class Progress extends Component
         $this->color = $color;
         $this->arcLength = 50.265;
         $this->dashValue = ($this->arcLength * $this->progress) / 100;
-        $this->label = $label ?? "__('Progress')";
+        $this->label = $label ?? __('Progress');
         $this->showText = (bool) $showText;
     }
 

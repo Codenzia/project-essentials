@@ -2,21 +2,18 @@
 
 namespace Codenzia\ProjectEssentials;
 
-use Codenzia\ProjectEssentials\Commands\ProjectEssentialsCommand;
-use Codenzia\ProjectEssentials\Testing\TestsProjectEssentials;
-use Codenzia\ProjectEssentials\View\Components\Progress;
-use Filament\Support\Assets\AlpineComponent;
+use Codenzia\ProjectEssentials\Commands\ProjectEssentialCommand;
 use Filament\Support\Assets\Asset;
 use Filament\Support\Assets\Css;
 use Filament\Support\Assets\Js;
 use Filament\Support\Facades\FilamentAsset;
 use Filament\Support\Facades\FilamentIcon;
 use Illuminate\Filesystem\Filesystem;
-use Illuminate\Support\Facades\Blade;
 use Livewire\Features\SupportTesting\Testable;
 use Spatie\LaravelPackageTools\Commands\InstallCommand;
 use Spatie\LaravelPackageTools\Package;
 use Spatie\LaravelPackageTools\PackageServiceProvider;
+use Illuminate\Support\Facades\Blade;
 
 class ProjectEssentialsServiceProvider extends PackageServiceProvider
 {
@@ -55,24 +52,21 @@ class ProjectEssentialsServiceProvider extends PackageServiceProvider
         }
     }
 
-    public function boot(): void
-    {
-        // Ensure the real path to views is registered with the namespace
-        $this->loadViewsFrom(__DIR__ . '/../resources/views', 'project-essentials');
+    // public function boot(): void
+    // {
+    //     dd('here');
+    //     // Ensure the real path to views is registered with the namespace
 
-        // Map component classes under the same namespace so <x-project-essentials::progress> uses the class
-        Blade::componentNamespace('Codenzia\\ProjectEssentials\\View\\Components', 'project-essentials');
-
-        // Optionally register short-named components:
-        $this->loadViewComponentsAs('project-essentials', [
-            Progress::class,
-        ]);
-    }
+    // }
 
     public function packageRegistered(): void {}
 
     public function packageBooted(): void
     {
+
+        $this->loadViewsFrom(__DIR__ . '/../resources/views', 'project-essentials');
+        Blade::componentNamespace('Codenzia\\ProjectEssentials\\View\\Components', 'project-essentials');      
+
         parent::packageBooted();
         // Asset Registration
         FilamentAsset::register(
@@ -87,18 +81,6 @@ class ProjectEssentialsServiceProvider extends PackageServiceProvider
 
         // Icon Registration
         FilamentIcon::register($this->getIcons());
-
-        // Handle Stubs
-        if (app()->runningInConsole()) {
-            foreach (app(Filesystem::class)->files(__DIR__ . '/../stubs/') as $file) {
-                $this->publishes([
-                    $file->getRealPath() => base_path("stubs/project-essentials/{$file->getFilename()}"),
-                ], 'project-essentials-stubs');
-            }
-        }
-
-        // Testing
-        Testable::mixin(new TestsProjectEssentials);
     }
 
     protected function getAssetPackageName(): ?string
@@ -112,9 +94,8 @@ class ProjectEssentialsServiceProvider extends PackageServiceProvider
     protected function getAssets(): array
     {
         return [
-            // AlpineComponent::make('project-essentialst', __DIR__ . '/../resources/dist/components/project-essentialst.js'),
-            // Css::make('project-essentialst-styles', __DIR__ . '/../resources/dist/project-essentialst.css'),
-            // Js::make('project-essentialst-scripts', __DIR__ . '/../resources/dist/project-essentialst.js'),
+            Css::make('project-essentials-styles', __DIR__ . '/../resources/dist/swiper.css'),
+            Js::make('project-essentials-scripts', __DIR__ . '/../resources/dist/swiper.js'),
         ];
     }
 
@@ -124,7 +105,7 @@ class ProjectEssentialsServiceProvider extends PackageServiceProvider
     protected function getCommands(): array
     {
         return [
-            ProjectEssentialsCommand::class,
+            ProjectEssentialCommand::class,
         ];
     }
 
@@ -157,8 +138,6 @@ class ProjectEssentialsServiceProvider extends PackageServiceProvider
      */
     protected function getMigrations(): array
     {
-        return [
-            'create_project-essentials_table',
-        ];
+        return [];
     }
 }
