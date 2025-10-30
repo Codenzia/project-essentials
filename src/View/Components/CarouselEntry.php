@@ -2,12 +2,18 @@
 
 namespace Codenzia\ProjectEssentials\View\Components;
 
+use Closure;
+use Codenzia\ProjectEssentials\Concerns\HasCardSchema;
 use Filament\Infolists\Components\Entry;
 use Illuminate\Contracts\Support\Htmlable;
-use Closure;
+use Illuminate\Database\Eloquent\Model;
+use Filament\Schemas\Schema;
 
 class CarouselEntry extends Entry
 {
+    use HasCardSchema;
+
+
     protected string $view = 'project-essentials::components.carousel-entry';
 
     protected bool $navigation = false;
@@ -26,10 +32,11 @@ class CarouselEntry extends Entry
     protected bool $autoplay = false;
     protected int $autoplayDelay = 3000;
     protected string $effect = 'slide';
-    protected int $cardsPerSlideOffset = 8;
+    protected int $cardsPerSlideOffset = 4;
     protected bool $centeredSlides = false;
-    protected int $slidesPerView = 1;
-    protected array $cardSchema = [];
+    protected int $slidesPerView = 4;
+    protected string|Htmlable|Closure|null $label = null;
+    protected string|Htmlable|Closure|null $icon = null;
 
     public function navigation(bool $condition = true): static
     {
@@ -164,9 +171,16 @@ class CarouselEntry extends Entry
         return $this;
     }
 
-    public function cardSchema(array $schema): static
+    public function label(string|Htmlable|Closure|null $label): static
     {
-        $this->cardSchema = $schema;
+        $this->label = $label;
+
+        return parent::label($label);
+    }
+    
+    public function icon(string|Htmlable|Closure|null $icon): static
+    {
+        $this->icon = $icon;
 
         return $this;
     }
@@ -266,8 +280,31 @@ class CarouselEntry extends Entry
         return $this->slidesPerView;
     }
 
-    public function getCardSchema(): array
+    public function getIcon(): string|Htmlable|Closure|null
     {
-        return $this->cardSchema;
+        return $this->icon;
     }
+
+    public function getEvaluatedCardSchema(mixed $record): array
+    {
+        if (!$record instanceof Model) {
+            return [];
+        }
+
+        $schema = $this->getCardSchema($record);
+
+        if (! $schema) {
+            return [];
+        }
+
+        return $schema->getComponents();
+    }
+
+    protected function resolveDefaultClosureDependencyForEvaluationByName(string $parameterName): array
+    {
+        return match ($parameterName) {
+            'livewire' => [$this->getLivewire()],
+            default => parent::resolveDefaultClosureDependencyForEvaluationByName($parameterName),
+        };
+    }    
 }

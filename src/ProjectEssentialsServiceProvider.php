@@ -81,6 +81,7 @@ class ProjectEssentialsServiceProvider extends PackageServiceProvider
 
         // Icon Registration
         FilamentIcon::register($this->getIcons());
+
     }
 
     protected function getAssetPackageName(): ?string
