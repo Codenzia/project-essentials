@@ -7,8 +7,11 @@ use Illuminate\View\Component;
 class Carousel extends Component
 {
     public $slides;
+
     public bool $autoplay;
+
     public bool $indicators;
+
     public bool $controls;
 
     /**

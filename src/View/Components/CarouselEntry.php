@@ -7,36 +7,54 @@ use Codenzia\ProjectEssentials\Concerns\HasCardSchema;
 use Filament\Infolists\Components\Entry;
 use Illuminate\Contracts\Support\Htmlable;
 use Illuminate\Database\Eloquent\Model;
-use Filament\Schemas\Schema;
 
 class CarouselEntry extends Entry
 {
     use HasCardSchema;
 
-
     protected string $view = 'project-essentials::components.carousel-entry';
 
     protected bool $navigation = false;
+
     protected bool $pagination = false;
+
     protected string $paginationType = 'bullets';
+
     protected bool $paginationClickable = false;
+
     protected bool $paginationDynamicBullets = false;
+
     protected bool $paginationHideOnClick = false;
+
     protected int $paginationDynamicMainBullets = 1;
+
     protected bool $scrollbar = false;
+
     protected int $scrollbarDragSize = 50;
+
     protected bool $scrollbarDraggable = false;
+
     protected bool $scrollbarSnapOnRelease = false;
+
     protected bool $scrollbarHide = true;
+
     protected int $height = 300;
+
     protected bool $autoplay = false;
+
     protected int $autoplayDelay = 3000;
+
     protected string $effect = 'slide';
+
     protected int $cardsPerSlideOffset = 4;
+
     protected bool $centeredSlides = false;
+
     protected int $slidesPerView = 4;
-    protected string|Htmlable|Closure|null $label = null;
-    protected string|Htmlable|Closure|null $icon = null;
+
+    protected string | Htmlable | Closure | null $label = null;
+
+    protected string | Htmlable | Closure | null $icon = null;
 
     public function navigation(bool $condition = true): static
     {
@@ -171,20 +189,20 @@ class CarouselEntry extends Entry
         return $this;
     }
 
-    public function label(string|Htmlable|Closure|null $label): static
+    public function label(string | Htmlable | Closure | null $label): static
     {
         $this->label = $label;
 
         return parent::label($label);
     }
-    
-    public function icon(string|Htmlable|Closure|null $icon): static
+
+    public function icon(string | Htmlable | Closure | null $icon): static
     {
         $this->icon = $icon;
 
         return $this;
     }
-    
+
     public function getNavigation(): bool
     {
         return $this->navigation;
@@ -280,14 +298,14 @@ class CarouselEntry extends Entry
         return $this->slidesPerView;
     }
 
-    public function getIcon(): string|Htmlable|Closure|null
+    public function getIcon(): string | Htmlable | Closure | null
     {
         return $this->icon;
     }
 
     public function getEvaluatedCardSchema(mixed $record): array
     {
-        if (!$record instanceof Model) {
+        if (! $record instanceof Model) {
             return [];
         }
 
@@ -306,5 +324,5 @@ class CarouselEntry extends Entry
             'livewire' => [$this->getLivewire()],
             default => parent::resolveDefaultClosureDependencyForEvaluationByName($parameterName),
         };
-    }    
+    }
 }

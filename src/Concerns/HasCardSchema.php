@@ -27,8 +27,6 @@ trait HasCardSchema
      *
      * If no $record is provided, the method will attempt to resolve one from the current
      * component / Livewire context (if possible). Prefer passing the Model explicitly.
-     *
-     * @param Model|null $record
      */
     public function getCardSchema(?Model $record = null): ?Schema
     {

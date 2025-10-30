@@ -8,12 +8,10 @@ use Filament\Support\Assets\Css;
 use Filament\Support\Assets\Js;
 use Filament\Support\Facades\FilamentAsset;
 use Filament\Support\Facades\FilamentIcon;
-use Illuminate\Filesystem\Filesystem;
-use Livewire\Features\SupportTesting\Testable;
+use Illuminate\Support\Facades\Blade;
 use Spatie\LaravelPackageTools\Commands\InstallCommand;
 use Spatie\LaravelPackageTools\Package;
 use Spatie\LaravelPackageTools\PackageServiceProvider;
-use Illuminate\Support\Facades\Blade;
 
 class ProjectEssentialsServiceProvider extends PackageServiceProvider
 {
@@ -65,7 +63,7 @@ class ProjectEssentialsServiceProvider extends PackageServiceProvider
     {
 
         $this->loadViewsFrom(__DIR__ . '/../resources/views', 'project-essentials');
-        Blade::componentNamespace('Codenzia\\ProjectEssentials\\View\\Components', 'project-essentials');      
+        Blade::componentNamespace('Codenzia\\ProjectEssentials\\View\\Components', 'project-essentials');
 
         parent::packageBooted();
         // Asset Registration
