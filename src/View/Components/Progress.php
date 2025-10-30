@@ -7,10 +7,15 @@ use Illuminate\View\Component;
 class Progress extends Component
 {
     public float $progress;
+
     public string $color;
+
     public float $arcLength;
+
     public float $dashValue = 0;
+
     public bool $showText;
+
     public string $label;
 
     /**
