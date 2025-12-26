@@ -1,4 +1,4 @@
-<div class="flex items-center gap-6">
+<div {{ $attributes->merge(['class' => 'flex items-center gap-6']) }}>
     <div class="relative progress-box">
         <svg class="w-full h-full" viewBox="0 0 36 18">
             <defs>
@@ -7,16 +7,16 @@
                     <stop offset="100%" style="stop-color:var(--{{ $color }}-500)" />
                 </linearGradient>
             </defs>
-            <path class="dark:text-gray-800 text-gray-200" stroke="currentColor" stroke-linecap="round"
-                stroke-width="2" fill="none" d="M2 18 A16 16 0 0 1 34 18"></path>
+            <path class="dark:text-gray-800 text-gray-200" stroke="currentColor" stroke-linecap="round" stroke-width="2"
+                fill="none" d="M2 18 A16 16 0 0 1 34 18"></path>
             <path stroke="url(#progressGradient)" stroke-linecap="round" stroke-width="4" fill="none"
                 stroke-dasharray="{{ $dashValue }}, {{ $arcLength }}" d="M2 18 A16 16 0 0 1 34 18">
             </path>
         </svg>
-        <div class="absolute inset-0 flex flex-col items-center justify-center mt-10 text-md dark:text-white">
-            {{ $progress }} %
-            @if($showText)
-            <p class="text-md dark:text-[#919EAB] text-[#919EAB]">{{ $label }}</p>
+        <div class="absolute inset-0 flex flex-col items-center justify-center mt-16 gap-1">
+            <p class="text-xl font-semibold dark:text-white">{{ $progress }} %</p>
+            @if ($showText)
+                <p class="text-sm  font-normal dark:text-gray-400 text-gray-500">{{ $label }}</p>
             @endif
         </div>
     </div>
