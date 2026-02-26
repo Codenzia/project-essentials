@@ -40,11 +40,29 @@ return [
 ];
 ```
 
-## Usage
+## Components
 
-```php
- <x-project-essentials::progress :progress="$progress" color="primary" :label="false" />
+### Progress
+
+```blade
+<x-project-essentials::progress :progress="$progress" color="primary" :label="false" />
 ```
+
+### Carousel
+
+```blade
+<x-project-essentials::carousel :items="$items" />
+```
+
+### Pagination
+
+A custom pagination view with brand colors, dark mode, and RTL support. Use it with Laravel's paginator:
+
+```blade
+{{ $items->links('project-essentials::components.pagination') }}
+```
+
+Features: mobile and desktop layouts, "Showing X to Y of Z results" text, prev/next arrows, numbered page buttons, active page highlighted with `bg-brand-600`, RTL-aware arrow direction.
 
 ## Testing
 
