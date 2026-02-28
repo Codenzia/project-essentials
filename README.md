@@ -1,91 +1,171 @@
-Project Essentials is a lightweight Laravel package that provides commonly used UI components, configuration and migrations to help bootstrap new projects quickly. It offers publishable views and a small set of reusable Blade components (for example, a progress indicator) that are easy to customize through component props or by publishing and editing the package views/config.
+# Project Essentials
 
-Use the included components directly in your Blade templates or publish the views/config to adapt them to your project's style. Example usage:
+Essential UI components, form components, and utilities for Laravel and Filament v4 projects — including progress indicators, carousels, pagination, and an icon picker.
 
-```blade
-<x-project-essentials::progress :progress="$progress" color="primary" :label="false" />
-```
+## Features
+
+- **Progress Component** — Circular SVG progress indicator with gradient colors
+- **Carousel Component** — Swiper.js-powered carousel for Blade templates
+- **CarouselEntry** — Filament infolist entry with dynamic card schemas and full Swiper configuration
+- **Pagination** — Custom Laravel pagination view with RTL and dark mode support
+- **IconPicker** — Filament form select with 45+ categorized Heroicons
+- **Dark Mode** — All components support dark mode
+- **RTL Support** — Right-to-left layout support
+
+## Requirements
+
+- PHP 8.3+
+- Laravel 12+
+- Filament 4.x
 
 ## Installation
 
-You can install the package via composer:
+Install via Composer:
 
 ```bash
 composer require codenzia/project-essentials
 ```
 
-You can publish and run the migrations with:
-
-```bash
-php artisan vendor:publish --tag="project-essentials-migrations"
-php artisan migrate
-```
-
-You can publish the config file with:
+Publish the config (optional):
 
 ```bash
 php artisan vendor:publish --tag="project-essentials-config"
 ```
 
-Optionally, you can publish the views using
+Publish views for customization (optional):
 
 ```bash
 php artisan vendor:publish --tag="project-essentials-views"
-```
-
-This is the contents of the published config file:
-
-```php
-return [
-];
 ```
 
 ## Components
 
 ### Progress
 
-```blade
-<x-project-essentials::progress :progress="$progress" color="primary" :label="false" />
-```
-
-### Carousel
+A circular progress indicator with SVG arc and gradient colors.
 
 ```blade
-<x-project-essentials::carousel :items="$items" />
+<x-project-essentials::progress
+    :progress="75"
+    color="primary"
+    label="Completion"
+    :show-text="true"
+/>
 ```
+
+| Prop | Type | Default | Description |
+|------|------|---------|-------------|
+| `progress` | float | `0` | Progress percentage (0-100) |
+| `color` | string | `'primary'` | CSS color variable name |
+| `label` | string | `'Progress'` | Display label |
+| `showText` | bool | `true` | Show percentage text |
+
+### Carousel (Blade)
+
+A simple Swiper.js carousel for Blade templates.
+
+```blade
+<x-project-essentials::carousel
+    :slides="$slides"
+    :autoplay="true"
+    :indicators="true"
+    :controls="true"
+/>
+```
+
+| Prop | Type | Default | Description |
+|------|------|---------|-------------|
+| `slides` | array | `[]` | Array of slide content |
+| `autoplay` | bool | `false` | Enable autoplay |
+| `indicators` | bool | `true` | Show pagination dots |
+| `controls` | bool | `true` | Show prev/next arrows |
+
+### CarouselEntry (Filament Infolist)
+
+An advanced carousel component for Filament infolists with dynamic card schemas.
+
+```php
+use Codenzia\ProjectEssentials\View\Components\CarouselEntry;
+
+CarouselEntry::make('items')
+    ->slidesPerView(3)
+    ->navigation()
+    ->pagination()
+    ->autoplay()
+    ->autoplayDelay(3000)
+    ->effect('slide')
+    ->height(300)
+    ->cardSchema(function (Schema $schema, ?Model $record) {
+        return $schema->components([
+            TextEntry::make('title'),
+            TextEntry::make('description'),
+            ImageEntry::make('image'),
+        ]);
+    })
+```
+
+**Available methods:**
+
+| Method | Description |
+|--------|-------------|
+| `slidesPerView(int)` | Number of visible slides |
+| `centeredSlides(bool)` | Center active slide |
+| `height(int)` | Container height in pixels |
+| `navigation(bool)` | Show prev/next arrows |
+| `pagination(bool)` | Show pagination |
+| `paginationType(string)` | `'bullets'`, `'fraction'`, `'progressbar'` |
+| `paginationClickable(bool)` | Clickable pagination bullets |
+| `scrollbar(bool)` | Show scrollbar |
+| `autoplay(bool)` | Enable autoplay |
+| `autoplayDelay(int)` | Autoplay delay in ms |
+| `effect(string)` | `'slide'`, `'fade'`, `'cube'`, `'coverflow'`, `'flip'`, `'cards'` |
+| `cardSchema(Closure)` | Dynamic schema builder for each slide |
 
 ### Pagination
 
-A custom pagination view with brand colors, dark mode, and RTL support. Use it with Laravel's paginator:
+A custom pagination view with mobile-friendly layout, RTL support, and dark mode.
 
 ```blade
 {{ $items->links('project-essentials::components.pagination') }}
 ```
 
-Features: mobile and desktop layouts, "Showing X to Y of Z results" text, prev/next arrows, numbered page buttons, active page highlighted with `bg-brand-600`, RTL-aware arrow direction.
+Features:
+- Mobile: simplified prev/next with result count
+- Desktop: full page numbers with prev/next
+- Active page highlighted with brand color
+- RTL-aware layout
 
-## Testing
+### IconPicker (Form Component)
 
-```bash
-composer test
+A searchable Filament select field pre-loaded with 45+ categorized Heroicons.
+
+```php
+use Codenzia\ProjectEssentials\Forms\Components\IconPicker;
+
+IconPicker::make('icon')
+    ->label('Icon')
+    ->required()
 ```
 
-## Changelog
+Categories include: Education, Buildings, Location, Transport, Health, Shopping, Communication, Nature, Utilities, Recreation, People, and more.
 
-Please see [CHANGELOG](CHANGELOG.md) for more information on what has changed recently.
+Returns the icon string value (e.g., `'heroicon-o-home'`).
 
-## Contributing
+## Plugin Registration
 
-Please see [CONTRIBUTING](.github/CONTRIBUTING.md) for details.
+Register the plugin in your Filament panel provider:
 
-## Security Vulnerabilities
+```php
+use Codenzia\ProjectEssentials\ProjectEssentialsPlugin;
 
-Please review [our security policy](../../security/policy) on how to report security vulnerabilities.
-
-## Credits
-
-- [:author_name](https://github.com/:author_username)
-- [All Contributors](../../contributors)
+public function panel(Panel $panel): Panel
+{
+    return $panel
+        ->plugins([
+            ProjectEssentialsPlugin::make(),
+        ]);
+}
+```
 
 ## License
 
