@@ -1,8 +1,8 @@
 {
     "name": "codenzia/project-essentials",
-    "description": ":package_description",
+    "description": "Essential project utilities and helpers for Laravel applications.",
     "keywords": [
-        ":vendor_name",
+        "codenzia",
         "laravel",
         "project-essentials"
     ],
