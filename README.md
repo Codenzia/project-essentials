@@ -370,14 +370,27 @@ IconColoredEnumSelect::make('status')
 
 ### DatePickerWithHint
 
-DatePicker that auto-applies `config('app.date_format')` with a human-readable format hint.
+DatePicker that auto-applies `config('app.date_format')` with a human-readable format hint icon.
 
 ```php
 use Codenzia\ProjectEssentials\Forms\Components\DatePickerWithHint;
 
+// Default: hint icon next to the label (top)
 DatePickerWithHint::make('start_date')
     ->label('Start Date')
+
+// Prefix icon inside the input — avoids extra label-row height in table repeaters
+DatePickerWithHint::make('due_date')
+    ->hintPosition('left')
+
+// Suffix icon inside the input
+DatePickerWithHint::make('due_date')
+    ->hintPosition('right')
 ```
+
+| Method | Values | Description |
+|--------|--------|-------------|
+| `hintPosition(string)` | `'top'` (default), `'left'`, `'right'` | `top` — hint icon with tooltip next to label; `left` — prefix icon inside input; `right` — suffix icon inside input |
 
 ### PercentageSlider
 
