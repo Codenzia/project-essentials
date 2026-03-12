@@ -7,6 +7,7 @@ use Filament\Tables\Columns\Column;
 class HtmlColumn extends Column
 {
     protected string $view = 'project-essentials::components.html-column';
+
     protected string $htmlContent = '';
 
     public function html(string $html): static

@@ -2,12 +2,10 @@
 
 namespace Codenzia\ProjectEssentials\Traits;
 
-use Illuminate\Database\Eloquent\Collection;
 use Exception;
-use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Request;
+use Illuminate\Support\Str;
 
 trait CanLogsActivity
 {
@@ -16,23 +14,24 @@ trait CanLogsActivity
     public static function bootCanLogsActivity()
     {
         static::created(function ($model) {
-            if (!static::$skipLogging && !app()->runningInConsole()) {
+            if (! static::$skipLogging && ! app()->runningInConsole()) {
                 $model->logActivity('created');
             }
         });
 
         static::updated(function ($model) {
-            if (!static::$skipLogging && $model->isDirty()) {
+            if (! static::$skipLogging && $model->isDirty()) {
                 $model->logActivity('updated');
             }
         });
 
         static::deleted(function ($model) {
-            if (!static::$skipLogging) {
+            if (! static::$skipLogging) {
                 $model->logActivity('deleted');
             }
         });
     }
+
     public function logActivity(string $description)
     {
         $model = $this;
@@ -52,7 +51,7 @@ trait CanLogsActivity
             $originalData = [];
             $attributeDiffs = [];
             foreach ($currentData as $key => $val) {
-                if ($key !== $model->getKeyName() && !in_array($key, ['created_at', 'updated_at'])) {
+                if ($key !== $model->getKeyName() && ! in_array($key, ['created_at', 'updated_at'])) {
                     if ($val !== null && $val !== '') {
                         $attributeDiffs[$key] = ['old' => null, 'new' => $val];
                     }
@@ -118,11 +117,9 @@ trait CanLogsActivity
                     $friendlyFieldName = $this->getFriendlyFieldName($relationName);
                     $displayValue = $this->getRelatedModelName($relationName, $newVal);
                     $fragments[] = $friendlyFieldName;
-                }
-                elseif (strpos($lowerKey, 'date') !== false) {
+                } elseif (strpos($lowerKey, 'date') !== false) {
                     $fragments[] = $this->getFriendlyFieldName($key);
-                }
-                else {
+                } else {
                     $fragments[] = $this->getFriendlyFieldName($key);
                 }
             }
@@ -149,21 +146,20 @@ trait CanLogsActivity
 
         try {
             DB::table('activity_logs')->insert([
-                'user_id'      => Auth::id() ?? 1,
-                'model_id'     => $model->getKey(),
-                'model'        => static::class,
+                'user_id' => Auth::id() ?? 1,
+                'model_id' => $model->getKey(),
+                'model' => static::class,
                 'current_data' => json_encode($currentData),
-                'new_data'     => json_encode($dataForLogging),
-                'description'  => $descriptionText,
-                'created_at'   => now(),
-                'updated_at'   => now(),
+                'new_data' => json_encode($dataForLogging),
+                'description' => $descriptionText,
+                'created_at' => now(),
+                'updated_at' => now(),
             ]);
         } catch (Exception $e) {
             // Silently fail if logging fails (don't break the main operation)
             \Log::error('Activity logging failed: ' . $e->getMessage());
         }
     }
-
 
     /**
      * Convert a value to a short readable string for descriptions.
@@ -178,8 +174,10 @@ trait CanLogsActivity
         }
         if (is_array($value) || is_object($value)) {
             $s = json_encode($value);
+
             return strlen($s) > 100 ? substr($s, 0, 97) . '...' : $s;
         }
+
         return (string) $value;
     }
 
@@ -196,7 +194,7 @@ trait CanLogsActivity
         $actualRelationName = $this->getActualRelationName($relationName);
 
         // Check if the relation method exists on the model
-        if (!method_exists($this, $actualRelationName)) {
+        if (! method_exists($this, $actualRelationName)) {
             return (string) $id;
         }
 
@@ -210,7 +208,7 @@ trait CanLogsActivity
             // Try to find the record by ID
             $relatedModel = $relatedModelClass::find($id);
 
-            if (!$relatedModel) {
+            if (! $relatedModel) {
                 return "Deleted ({$id})";
             }
 
@@ -218,7 +216,7 @@ trait CanLogsActivity
             $nameFields = ['name', 'title', 'full_name', 'first_name', 'email', 'username'];
 
             foreach ($nameFields as $field) {
-                if ($relatedModel->hasAttribute($field) && !empty($relatedModel->$field)) {
+                if ($relatedModel->hasAttribute($field) && ! empty($relatedModel->$field)) {
                     return $relatedModel->$field;
                 }
             }
@@ -228,7 +226,7 @@ trait CanLogsActivity
                 $firstName = $relatedModel->first_name ?? '';
                 $lastName = $relatedModel->last_name ?? '';
                 $fullName = trim($firstName . ' ' . $lastName);
-                if (!empty($fullName)) {
+                if (! empty($fullName)) {
                     return $fullName;
                 }
             }
@@ -323,6 +321,7 @@ trait CanLogsActivity
         // Handle special cases
         if (str_contains($fieldName, '_user')) {
             $baseName = str_replace('_user', '', $fieldName);
+
             return Str::title(str_replace('_', ' ', $baseName));
         }
 

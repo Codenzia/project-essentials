@@ -14,7 +14,7 @@ class DateHelper
         $range = range(1, 12);
 
         return array_combine($range, array_map(
-            fn($value) => $value . ' ' . self::getPeriodSuffix($value),
+            fn ($value) => $value . ' ' . self::getPeriodSuffix($value),
             $range
         ));
     }

@@ -23,7 +23,7 @@ class SplitButtonDropdownAction extends ActionGroup
     {
         parent::setUp();
 
-        //setup the chevron defaults
+        // setup the chevron defaults
         $this->view('project-essentials::filament.components.split-button-dropdown-actions');
     }
 }

@@ -2,8 +2,8 @@
 
 namespace Codenzia\ProjectEssentials\Helpers;
 
-use Exception;
 use Carbon\Carbon;
+use Exception;
 use InvalidArgumentException;
 
 class DateRangeHelper
@@ -31,11 +31,11 @@ class DateRangeHelper
     public static function makeShort(?string $start, ?string $end): ?string
     {
         if (! $start || ! $end) {
-            return "";
+            return '';
         }
 
         $startDate = Carbon::parse($start);
-        $endDate   = Carbon::parse($end);
+        $endDate = Carbon::parse($end);
 
         $baseFormat = config('app.date_format', 'd/m/Y');
 
@@ -43,7 +43,7 @@ class DateRangeHelper
         $dayFirst = strpos($baseFormat, 'd') < strpos($baseFormat, 'm');
 
         // define short pieces based on config ordering
-        $shortDay   = $dayFirst ? 'j M' : 'M j';
+        $shortDay = $dayFirst ? 'j M' : 'M j';
         $shortDayYr = $dayFirst ? "j M 'y" : "M j 'y";
 
         // Same year
@@ -73,7 +73,7 @@ class DateRangeHelper
         $dates = explode($separator, $dateRange);
         $start_date = $dates[0];
         $end_date = null;
-        if (count($dates) !== 2 && !$endDateOptional) {
+        if (count($dates) !== 2 && ! $endDateOptional) {
             throw new InvalidArgumentException("Invalid date range format: [$dateRange]");
         }
 
@@ -91,18 +91,18 @@ class DateRangeHelper
         ];
 
         $start = null;
-        $end   = null;
+        $end = null;
 
         foreach ($formats as $format) {
             try {
                 $start = Carbon::createFromFormat($format, $start_date);
                 if ($end_date) {
-                    $end   = Carbon::createFromFormat($format, $end_date);
+                    $end = Carbon::createFromFormat($format, $end_date);
                 }
                 if ($start && ($end || $endDateOptional)) {
                     return [
                         'start_date' => $start->format(config('app.date_format', 'd/m/Y')),
-                        'end_date'   => $end?->format(config('app.date_format', 'd/m/Y')),
+                        'end_date' => $end?->format(config('app.date_format', 'd/m/Y')),
                     ];
                 }
             } catch (Exception $e) {
@@ -128,6 +128,7 @@ class DateRangeHelper
         } else {
             $end_date = null;
         }
+
         return ['start_date' => $start_date, 'end_date' => $end_date];
     }
 }

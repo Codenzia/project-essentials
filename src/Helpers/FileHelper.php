@@ -8,8 +8,11 @@ namespace Codenzia\ProjectEssentials\Helpers;
 class FileHelper
 {
     private const IMAGE_EXTENSIONS = ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'svg', 'webp'];
+
     private const DOCUMENT_EXTENSIONS = ['pdf', 'doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx', 'txt', 'odt'];
+
     private const VIDEO_EXTENSIONS = ['mp4', 'avi', 'mov', 'wmv', 'flv', 'mkv'];
+
     private const AUDIO_EXTENSIONS = ['mp3', 'wav', 'aac', 'flac'];
 
     public static function getFileType(string $filename): string

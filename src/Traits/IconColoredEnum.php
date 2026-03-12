@@ -116,28 +116,31 @@ trait IconColoredEnum
             'emerald',
             'cyan',
             'teal',
-            'fuchsia'
+            'fuchsia',
         ];
 
         $map = static::getColors();
         if (isset($map[$value])) {
             $color = $map[$value];
             if ($useTailwindColors) {
-                static  $semanticToTailwind = [
+                static $semanticToTailwind = [
                     'success' => 'success',
-                    'danger'  => 'red',
+                    'danger' => 'red',
                     'warning' => 'yellow',
-                    'info'    => 'blue',
-                    'gray'    => 'gray',
+                    'info' => 'blue',
+                    'gray' => 'gray',
                 ];
+
                 // Convert semantic to Tailwind
                 return $semanticToTailwind[$color] ?? $color;
             }
-            return  $color;
+
+            return $color;
         }
 
         // Otherwise, assign a pseudo-random color based on hash
         $index = hexdec(substr(md5($value), 0, 2)) % count($availableColors);
+
         return $availableColors[$index];
     }
 
@@ -168,7 +171,7 @@ trait IconColoredEnum
     {
         return array_combine(
             array_column(static::cases(), 'value'),
-            array_map(fn($case) => $case->getLabel(), static::cases())
+            array_map(fn ($case) => $case->getLabel(), static::cases())
         );
     }
 
@@ -176,7 +179,7 @@ trait IconColoredEnum
     {
         return array_combine(
             array_column(static::cases(), 'value'),
-            array_map(fn($case) => $case->getIcon(), static::cases())
+            array_map(fn ($case) => $case->getIcon(), static::cases())
         );
     }
 
@@ -184,7 +187,7 @@ trait IconColoredEnum
     {
         return array_combine(
             array_column(static::cases(), 'value'),
-            array_map(fn($case) => $case->getColor(), static::cases())
+            array_map(fn ($case) => $case->getColor(), static::cases())
         );
     }
 
@@ -204,9 +207,10 @@ trait IconColoredEnum
      */
     public static function casesExcept(array $exclude): array
     {
-        $cases =  array_filter(self::cases(), function ($case) use ($exclude) {
+        $cases = array_filter(self::cases(), function ($case) use ($exclude) {
             return ! in_array($case, $exclude, true);
         });
+
         return array_values($cases);
     }
 
@@ -217,6 +221,7 @@ trait IconColoredEnum
     public static function optionsExcept(array $exclude): array
     {
         $filteredCases = static::casesExcept($exclude);
+
         return array_map(function ($case) {
             return [
                 'value' => $case->value,

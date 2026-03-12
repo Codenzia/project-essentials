@@ -5,14 +5,14 @@ namespace Codenzia\ProjectEssentials\Traits;
 use Filament\Actions\Action;
 use Filament\Actions\ActionGroup;
 use Filament\Support\Enums\IconSize;
+use Filament\Support\Facades\FilamentView;
 use Filament\Tables\Columns\Column;
+use Filament\Tables\Columns\Layout\Grid;
 use Filament\Tables\Columns\Layout\Split;
 use Filament\Tables\Columns\Layout\Stack;
-use Filament\Tables\Columns\Layout\Grid;
-use Livewire\Attributes\On;
-use Filament\Support\Facades\FilamentView;
 use Filament\Tables\View\TablesRenderHook;
 use Illuminate\Contracts\View\View;
+use Livewire\Attributes\On;
 
 trait CanToggleColumns
 {
@@ -45,16 +45,19 @@ trait CanToggleColumns
 
     public function registerToggleableDropdown()
     {
-        if ($this->toggleDropdownRegistered) return;
+        if ($this->toggleDropdownRegistered) {
+            return;
+        }
 
         FilamentView::registerRenderHook(
             TablesRenderHook::TOOLBAR_START,
-            fn(): View => view('project-essentials::components.can-toggle-table-columns'),
+            fn (): View => view('project-essentials::components.can-toggle-table-columns'),
             scopes: static::class, // important, ties the Blade into the table Livewire context
         );
 
         $this->toggleDropdownRegistered = true;
     }
+
     /**
      * Entry point: sets up columns, toggleables, and applies toggle state.
      */
@@ -85,6 +88,7 @@ trait CanToggleColumns
         }
 
         $this->filteredCache[$cacheKey] = $this->filterColumnsRecursive($this->columns);
+
         return $this->filteredCache[$cacheKey];
     }
 
@@ -98,11 +102,12 @@ trait CanToggleColumns
         foreach ($columns as $column) {
             if ($column instanceof Split || $column instanceof Stack || $column instanceof Grid) {
                 $filteredChildren = $this->filterColumnsRecursive($column->getComponents() ?? []);
-                if (!empty($filteredChildren)) {
+                if (! empty($filteredChildren)) {
                     $cloned = clone $column;
                     $cloned->components($filteredChildren);
                     $result[] = $cloned;
                 }
+
                 continue;
             }
 
@@ -132,9 +137,9 @@ trait CanToggleColumns
             if ($col instanceof Column && method_exists($col, 'isToggleable') && $col->isToggleable()) {
 
                 // Respect isToggledHiddenByDefault as the initial state
-                $this->columnToggleState[$this->getColumnKey($col)] = !($col->isToggledHiddenByDefault() ?? false);
+                $this->columnToggleState[$this->getColumnKey($col)] = ! ($col->isToggledHiddenByDefault() ?? false);
 
-                //Remove ->toggleable from column to prevent default filament UI/handling
+                // Remove ->toggleable from column to prevent default filament UI/handling
                 $col->toggleable(false);
 
                 $toggleable[] = $col;
@@ -171,7 +176,7 @@ trait CanToggleColumns
                 'visible' => $isVisible,
 
                 // centralize all UI constants here
-                'icon'  => $isVisible ? 'heroicon-s-check-circle' : 'heroicon-s-eye-slash',
+                'icon' => $isVisible ? 'heroicon-s-check-circle' : 'heroicon-s-eye-slash',
                 'color' => $isVisible ? 'primary' : 'danger',
                 'iconSize' => 'large',
             ];
@@ -185,7 +190,7 @@ trait CanToggleColumns
             ->icon($isVisible ? 'heroicon-s-check-circle' : 'heroicon-s-eye-slash')
             ->iconSize(IconSize::Medium)
             ->color($isVisible ? 'primary' : 'danger')
-            ->action(fn($record) => $this->toggleColumnVisibility($key));
+            ->action(fn ($record) => $this->toggleColumnVisibility($key));
     }
 
     /**
@@ -200,7 +205,7 @@ trait CanToggleColumns
                 ->icon($this->getToggleAllIcon())
                 ->iconSize(IconSize::Medium)
                 ->color('primary')
-                ->action(fn() => $this->toggleAllColumns()),
+                ->action(fn () => $this->toggleAllColumns()),
         ];
 
         // Add individual column toggle actions
@@ -219,6 +224,7 @@ trait CanToggleColumns
 
         // Merge all actions
         $actions = array_merge($actions, $columnActions);
+
         return ActionGroup::make($actions)
             ->tooltip(__('Toggle columns on/off'))
             ->label('')
@@ -231,7 +237,6 @@ trait CanToggleColumns
                 'style' => $margin > 0 ? "margin-right: {$margin}px !important;" : '',
             ]);
     }
-
 
     /**
      * Generate a unique key for each column.
@@ -248,7 +253,7 @@ trait CanToggleColumns
     {
         $keyParts = [static::class];
 
-        if (!empty($this->uniqueViewName)) {
+        if (! empty($this->uniqueViewName)) {
             $keyParts[] = $this->uniqueViewName;
         }
 
@@ -277,7 +282,7 @@ trait CanToggleColumns
     public function toggleColumnVisibility(string $key): void
     {
         $current = $this->columnToggleState[$key] ?? true;
-        $new = !$current;
+        $new = ! $current;
 
         $this->columnToggleState[$key] = $new;
 
@@ -298,7 +303,7 @@ trait CanToggleColumns
     protected function areAllColumnsVisible(): bool
     {
         return collect($this->toggleableColumns)
-            ->every(fn($col) => ($this->columnToggleState[$this->getColumnKey($col)] ?? true));
+            ->every(fn ($col) => ($this->columnToggleState[$this->getColumnKey($col)] ?? true));
     }
 
     /**
@@ -322,7 +327,7 @@ trait CanToggleColumns
      */
     public function toggleAllColumns(): void
     {
-        $show = !$this->areAllColumnsVisible();
+        $show = ! $this->areAllColumnsVisible();
         $state = [];
         foreach ($this->toggleableColumns as $col) {
             $state[$this->getColumnKey($col)] = $show;

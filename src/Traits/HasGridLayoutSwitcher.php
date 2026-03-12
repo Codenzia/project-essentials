@@ -10,7 +10,6 @@ use Illuminate\Support\Facades\Session;
  *
  * Provides properties and methods for managing grid layout size, session persistence,
  * and dispatching Livewire events from a host component.
- *
  */
 trait HasGridLayoutSwitcher
 {
@@ -28,6 +27,7 @@ trait HasGridLayoutSwitcher
     {
         // Use the FQCN of the using class as a unique prefix.
         $prefix = str_replace(['\\', '.'], '_', get_class($this));
+
         return $prefix . '_grid_size';
     }
 
@@ -45,6 +45,7 @@ trait HasGridLayoutSwitcher
     public function getDynamicGridSize(): int
     {
         $sessionKey = $this->getGridLayoutSessionKey();
+
         return session($sessionKey, $this->gridSize);
     }
 
@@ -70,7 +71,7 @@ trait HasGridLayoutSwitcher
     /**
      * Helper to easily add this action to Filament.
      */
-    public  function makeGridLayoutSwitcherAction(): Action
+    public function makeGridLayoutSwitcherAction(): Action
     {
         return Action::make('grid_slider')
             ->label(__('Grid'))

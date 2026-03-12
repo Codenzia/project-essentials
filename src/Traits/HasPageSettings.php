@@ -105,6 +105,6 @@ trait HasPageSettings
      */
     protected function getPageSettingsCacheKey(): string
     {
-        return 'page_settings:'.Auth::id().':'.static::class;
+        return 'page_settings:' . Auth::id() . ':' . static::class;
     }
 }

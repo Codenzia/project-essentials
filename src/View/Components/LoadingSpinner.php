@@ -7,29 +7,38 @@ use Illuminate\View\Component;
 class LoadingSpinner extends Component
 {
     public bool $show;
+
     public int $delay;
+
     public string $blur;
+
     public string $opacity;
+
     public string $message;
+
     public string $size;
+
     public string $variant;
+
     public bool $fullscreen;
+
     public bool $showProgress;
+
     public string $theme;
 
     /**
      * Create a new component instance.
      *
-     * @param bool $show - Whether the spinner is initially visible
-     * @param int $delay - Delay in ms before showing spinner (prevents flash for fast loads)
-     * @param string $blur - Backdrop blur intensity: 'none', 'sm', 'md', 'lg', 'xl'
-     * @param string $opacity - Background opacity: '0', '5', '10', '25', '50', '75', '90', '95'
-     * @param string $message - Loading message to display
-     * @param string $size - Spinner size: 'sm', 'md', 'lg', 'xl'
-     * @param string $variant - Visual style: 'minimal', 'elegant', 'orbital', 'pulse'
-     * @param bool $fullscreen - Whether to cover the entire viewport
-     * @param bool $showProgress - Show indeterminate progress bar
-     * @param string $theme - Color theme: 'auto', 'light', 'dark'
+     * @param  bool  $show  - Whether the spinner is initially visible
+     * @param  int  $delay  - Delay in ms before showing spinner (prevents flash for fast loads)
+     * @param  string  $blur  - Backdrop blur intensity: 'none', 'sm', 'md', 'lg', 'xl'
+     * @param  string  $opacity  - Background opacity: '0', '5', '10', '25', '50', '75', '90', '95'
+     * @param  string  $message  - Loading message to display
+     * @param  string  $size  - Spinner size: 'sm', 'md', 'lg', 'xl'
+     * @param  string  $variant  - Visual style: 'minimal', 'elegant', 'orbital', 'pulse'
+     * @param  bool  $fullscreen  - Whether to cover the entire viewport
+     * @param  bool  $showProgress  - Show indeterminate progress bar
+     * @param  string  $theme  - Color theme: 'auto', 'light', 'dark'
      */
     public function __construct(
         bool $show = false,
