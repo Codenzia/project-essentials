@@ -95,6 +95,7 @@ class ProjectEssentialsServiceProvider extends PackageServiceProvider
         return [
             Css::make('project-essentials-styles', __DIR__ . '/../resources/dist/swiper.css'),
             Js::make('project-essentials-scripts', __DIR__ . '/../resources/dist/swiper.js'),
+            Js::make('project-essentials-responsive-tabs', __DIR__ . '/../resources/js/responsive-tabs.js'),
         ];
     }
 
