@@ -3,17 +3,19 @@
 namespace Codenzia\ProjectEssentials\Filament\Actions;
 
 use Filament\Actions\ActionGroup;
-use Filament\Tables\Table;
 use Filament\Actions\Concerns\InteractsWithRecord;
+use Filament\Tables\Table;
 
 class TableSplitButtonDropdownAction extends ActionGroup
 {
-    use  InteractsWithRecord;
+    use InteractsWithRecord;
+
     protected ?Table $table;
 
     public function table(?Table $table): static
     {
         $this->table = $table;
+
         return $this;
     }
 
@@ -21,7 +23,6 @@ class TableSplitButtonDropdownAction extends ActionGroup
     {
         return $this->table ?? $this->getGroup()?->getTable();
     }
-
 
     public function __construct(array $actions)
     {
@@ -40,7 +41,7 @@ class TableSplitButtonDropdownAction extends ActionGroup
     {
         parent::setUp();
 
-        //setup the chevron defaults
+        // setup the chevron defaults
         $this->view('project-essentials::filament.components.split-button-dropdown-actions');
     }
 
@@ -56,6 +57,7 @@ class TableSplitButtonDropdownAction extends ActionGroup
                 $action->table($table);
             }
         }
+
         return $actions;
     }
 }

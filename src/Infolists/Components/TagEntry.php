@@ -8,8 +8,6 @@ class TagEntry extends Entry
 {
     /**
      * The view used to render the entry.
-     *
-     * @var string
      */
     protected string $view = 'project-essentials::components.tag-column';
 }

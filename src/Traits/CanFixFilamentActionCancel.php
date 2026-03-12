@@ -4,12 +4,12 @@ namespace Codenzia\ProjectEssentials\Traits;
 
 use Filament\Actions\Action;
 
-//***************************************** THIS FIXES A BUG IN FILAMENT/ACTIONS Version v3.3.32 *****************************************
+// ***************************************** THIS FIXES A BUG IN FILAMENT/ACTIONS Version v3.3.32 *****************************************
 // IMPORTANT: Any Livewire component using this trait MUST ALSO USE
 // Filament\Actions\Concerns\InteractsWithActions (for unmountAction and $mountedActions)
 // AND Filament\Infolists\Concerns\InteractsWithInfolists (for unmountInfolistAction and $mountedInfolistActions).
 // Filament's Page classes (like ViewRecord, CreateRecord) typically already include these.
-//****************************************************************************************************************************************
+// ****************************************************************************************************************************************
 trait CanFixFilamentActionCancel
 {
     /**
@@ -25,13 +25,12 @@ trait CanFixFilamentActionCancel
      * This fix ensures the 'Close' button correctly triggers a Livewire method (`fixActionCancel`)
      * when clicked, allowing for proper server-side state cleanup.
      *
-     * @param Action $action The Filament Action being configured.
-     * @return void
+     * @param  Action  $action  The Filament Action being configured.
      */
     protected function configureAction(Action $action): void
     {
         $action->modalCancelAction(
-            fn(Action $action) => $action
+            fn (Action $action) => $action
                 ->action('fixActionCancel')
         );
     }
@@ -63,12 +62,11 @@ trait CanFixFilamentActionCancel
         }
     }
 
-
-    //Support filament tables as well
+    // Support filament tables as well
     protected function configureTableAction(Action $action): void
     {
         $action->modalCancelAction(
-            fn(Action $action) => $action
+            fn (Action $action) => $action
                 ->action('fixTableActionCancel')
         );
     }

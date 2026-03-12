@@ -2,8 +2,8 @@
 
 namespace Codenzia\ProjectEssentials\Forms\Components;
 
-use Filament\Forms\Components\Field;
 use Filament\Forms\Components\Concerns\HasStep;
+use Filament\Forms\Components\Field;
 
 class PercentageSlider extends Field
 {

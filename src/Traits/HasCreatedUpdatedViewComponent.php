@@ -7,6 +7,7 @@ use Filament\Support\Concerns\HasExtraAttributes;
 trait HasCreatedUpdatedViewComponent
 {
     use HasExtraAttributes;
+
     // Maximum characters for usernames
     public int $limit = 20;
 
@@ -22,6 +23,7 @@ trait HasCreatedUpdatedViewComponent
     public function limit(int $length): static
     {
         $this->limit = $length;
+
         return $this;
     }
 }

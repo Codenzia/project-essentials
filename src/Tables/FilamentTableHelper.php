@@ -2,14 +2,13 @@
 
 namespace Codenzia\ProjectEssentials\Tables;
 
-use Filament\Support\Enums\TextSize;
-use Filament\Forms\Components\Grid;
 use Filament\Forms\Components\TextInput;
+use Filament\Support\Enums\TextSize;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\Filter;
 use Filament\Tables\Table;
-use Illuminate\Support\Collection;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Collection;
 
 class FilamentTableHelper
 {
@@ -21,8 +20,6 @@ class FilamentTableHelper
     /**
      * Returns a static, cached array of common timestamp and userstamp column definitions.
      * This method ensures the columns are defined only once.
-     *
-     * @return array
      */
     private static function getStaticStampDefinitions(): array
     {
@@ -30,7 +27,7 @@ class FilamentTableHelper
             self::$cachedStampDefinitions = [
                 TextColumn::make('created_at')
                     ->dateTime()
-                    ->date(config("app.date_format"))
+                    ->date(config('app.date_format'))
                     ->sortable()
                     ->size(TextSize::ExtraSmall)
                     ->toggleable(isToggledHiddenByDefault: true)
@@ -38,7 +35,7 @@ class FilamentTableHelper
 
                 TextColumn::make('updated_at')
                     ->dateTime()
-                    ->date(config("app.date_format"))
+                    ->date(config('app.date_format'))
                     ->size(TextSize::ExtraSmall)
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true)
@@ -61,10 +58,10 @@ class FilamentTableHelper
         return self::$cachedStampDefinitions;
     }
 
-    /* Function to add time and user stamp columns to any filament table*/
+    /* Function to add time and user stamp columns to any filament table */
     public static function appendStampColumns(Table $table, bool $avoidDuplicates = false): Table
     {
-        $existingColumns = collect($table->getColumns())->keyBy(fn($column) => $column->getName());
+        $existingColumns = collect($table->getColumns())->keyBy(fn ($column) => $column->getName());
         // Use the static getter method to get the stamp definitions
         $stampDefinitions = self::getStaticStampDefinitions();
 
@@ -72,7 +69,7 @@ class FilamentTableHelper
             $columnsToAdd = [];
 
             foreach ($stampDefinitions as $column) {
-                if (!$existingColumns->has($column->getName())) {
+                if (! $existingColumns->has($column->getName())) {
                     $columnsToAdd[] = $column;
                 }
             }
@@ -80,7 +77,7 @@ class FilamentTableHelper
             $columnsToAdd = $stampDefinitions;
         }
 
-        if (!empty($columnsToAdd)) {
+        if (! empty($columnsToAdd)) {
             $table->columns(array_merge($existingColumns->values()->all(), $columnsToAdd));
         }
 
@@ -91,12 +88,12 @@ class FilamentTableHelper
      * Adds common timestamp and userstamp columns to an array of existing columns,
      * ensuring no duplicates are added.
      *
-     * @param array $initialColumns The array of columns to which stamp columns should be added.
+     * @param  array  $initialColumns  The array of columns to which stamp columns should be added.
      * @return array The combined array of columns with unique stamp columns appended.
      */
     public static function withStampColumns(array $initialColumns): array
     {
-        $existingColumnNames = Collection::make($initialColumns)->keyBy(fn($column) => $column->getName());
+        $existingColumnNames = Collection::make($initialColumns)->keyBy(fn ($column) => $column->getName());
 
         $columnsToAppend = [];
 
@@ -104,7 +101,7 @@ class FilamentTableHelper
         $stampDefinitions = self::getStaticStampDefinitions();
 
         foreach ($stampDefinitions as $column) {
-            if (!$existingColumnNames->has($column->getName())) {
+            if (! $existingColumnNames->has($column->getName())) {
                 $columnsToAppend[] = $column;
             }
         }
@@ -112,7 +109,7 @@ class FilamentTableHelper
         return array_merge($initialColumns, $columnsToAppend);
     }
 
-    //Use for table filters...
+    // Use for table filters...
     public static function withSearchFilter(array $filters, string $column = 'name', string $label = 'Search by name'): array
     {
         return array_merge(
@@ -129,9 +126,9 @@ class FilamentTableHelper
                         return $query
                             ->when(
                                 $data[$column],
-                                fn(Builder $query, $value): Builder => $query->where($column, 'like', "%{$value}%"),
+                                fn (Builder $query, $value): Builder => $query->where($column, 'like', "%{$value}%"),
                             );
-                    })
+                    }),
             ]
         );
     }

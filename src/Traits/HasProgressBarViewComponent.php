@@ -7,10 +7,13 @@ use InvalidArgumentException;
 trait HasProgressBarViewComponent
 {
     protected ?string $progressLabel = null;
+
     protected string $alignValue = 'right'; // default
+
     protected bool $hideValue = false; // default
 
     protected string $labelFontSize = 'md'; // default text-md
+
     protected string $valueFontSize = 'sm'; // default text-sm
 
     /**
@@ -19,6 +22,7 @@ trait HasProgressBarViewComponent
     public function progressLabel(string $label): static
     {
         $this->progressLabel = $label;
+
         // no forced alignment anymore — since left, center, right are valid with label
         return $this;
     }
@@ -34,6 +38,7 @@ trait HasProgressBarViewComponent
     public function labelFontSize(string $size): static
     {
         $this->labelFontSize = $size;
+
         return $this;
     }
 
@@ -48,6 +53,7 @@ trait HasProgressBarViewComponent
     public function valueFontSize(string $size): static
     {
         $this->valueFontSize = $size;
+
         return $this;
     }
 
@@ -67,7 +73,7 @@ trait HasProgressBarViewComponent
 
         if (! in_array($alignment, $allowed, true)) {
             throw new InvalidArgumentException(
-                "Invalid alignment value. Allowed: left, center, right, before, after"
+                'Invalid alignment value. Allowed: left, center, right, before, after'
             );
         }
 
@@ -85,6 +91,7 @@ trait HasProgressBarViewComponent
     public function hideValue(bool $hide = true): static
     {
         $this->hideValue = $hide;
+
         return $this;
     }
 

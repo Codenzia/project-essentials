@@ -3,13 +3,13 @@
 namespace Codenzia\ProjectEssentials\Forms\Components;
 
 use Codenzia\ProjectEssentials\Helpers\TailwindHelper;
-use InvalidArgumentException;
-use Throwable;
 use Codenzia\ProjectEssentials\Traits\IconColoredEnum;
 use Filament\Forms\Components\Select;
 use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\HtmlString;
 use Illuminate\Support\Str;
+use InvalidArgumentException;
+use Throwable;
 
 /**
  * IconColoredEnumSelect
@@ -30,6 +30,7 @@ use Illuminate\Support\Str;
 class IconColoredEnumSelect extends Select
 {
     protected ?string $enumClass = null;
+
     protected ?array $optionsWithLabels = null;
 
     /**
@@ -58,12 +59,12 @@ class IconColoredEnumSelect extends Select
         }
 
         if (! in_array(IconColoredEnum::class, class_uses($class), true)) {
-            throw new InvalidArgumentException("{$class} must use the " . IconColoredEnum::class . " trait.");
+            throw new InvalidArgumentException("{$class} must use the " . IconColoredEnum::class . ' trait.');
         }
 
         // Prepare simple searchable labels
         $this->optionsWithLabels = collect($class::cases())
-            ->mapWithKeys(fn($c) => [$c->value => $class::label($c->value)])
+            ->mapWithKeys(fn ($c) => [$c->value => $class::label($c->value)])
             ->toArray();
 
         // Render rich dropdown options HTML as strings
@@ -74,10 +75,10 @@ class IconColoredEnumSelect extends Select
             $icon = $class::icon($value);
             $color = $class::color($value);
 
-            if (!$icon || !$label || !$color) {
+            if (! $icon || ! $label || ! $color) {
                 throw new InvalidArgumentException("Enum value '{$value}' is missing icon, label, or color in {$class}.");
             }
-            $richOption =  $this->renderOptionHtml(
+            $richOption = $this->renderOptionHtml(
                 label: $class::label($value),
                 icon: $class::icon($value),
                 color: $class::color($value)
@@ -89,10 +90,10 @@ class IconColoredEnumSelect extends Select
             ->allowHtml()
             ->native(false)
             ->getSearchResultsUsing(
-                fn(string $search) => collect($this->optionsWithLabels)
-                    ->filter(fn(string $label) => Str::contains(mb_strtolower($label), mb_strtolower($search)))
+                fn (string $search) => collect($this->optionsWithLabels)
+                    ->filter(fn (string $label) => Str::contains(mb_strtolower($label), mb_strtolower($search)))
                     ->keys()
-                    ->mapWithKeys(fn($key) => [$key => $richOptions[$key]])
+                    ->mapWithKeys(fn ($key) => [$key => $richOptions[$key]])
                     ->toArray()
             )
             ->getOptionLabelUsing(function ($value) use ($class) {
@@ -101,7 +102,7 @@ class IconColoredEnumSelect extends Select
                 }
 
                 if (is_array($value)) {
-                    $chips = array_map(fn($val) => $this->renderChipHtml(
+                    $chips = array_map(fn ($val) => $this->renderChipHtml(
                         label: $class::label($val),
                         icon: $class::icon($val),
                         color: $class::color($val)
@@ -155,9 +156,9 @@ class IconColoredEnumSelect extends Select
     {
         $iconText = TailwindHelper::text($color, '600');
         $iconSvg = $this->renderIconSvg($icon, "w-4 h-4 {$iconText}");
-        $bg   = TailwindHelper::bg($color, '100');
+        $bg = TailwindHelper::bg($color, '100');
         $text = TailwindHelper::text($color, '700');
-        $bd   = 'border ' . TailwindHelper::border($color, '200');
+        $bd = 'border ' . TailwindHelper::border($color, '200');
 
         return new HtmlString(
             <<<HTML
@@ -182,6 +183,7 @@ class IconColoredEnumSelect extends Select
         } catch (Throwable $e) {
             $colorClass = preg_match('/text-([a-z]+)-\d{3}/', $classes, $m) ? $m[1] : 'gray';
             $dotBg = TailwindHelper::bg($colorClass);
+
             return "<span class=\"inline-block w-2 h-2 rounded-full {$dotBg}\"></span>";
         }
     }

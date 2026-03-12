@@ -41,7 +41,7 @@ trait HasHeaderFormActions
     protected function getHeaderActions(): array
     {
         return collect($this->getFormActions())
-            ->map(fn($action) => $action->formId('form'))
+            ->map(fn ($action) => $action->formId('form'))
             ->all();
     }
 }
