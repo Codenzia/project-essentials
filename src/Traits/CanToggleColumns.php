@@ -51,7 +51,7 @@ trait CanToggleColumns
 
         FilamentView::registerRenderHook(
             TablesRenderHook::TOOLBAR_START,
-            fn(): View => view('project-essentials::components.can-toggle-table-columns'),
+            fn (): View => view('project-essentials::components.can-toggle-table-columns'),
             scopes: static::class, // important, ties the Blade into the table Livewire context
         );
 
@@ -190,7 +190,7 @@ trait CanToggleColumns
             ->icon($isVisible ? 'heroicon-s-check-circle' : 'heroicon-s-eye-slash')
             ->iconSize(IconSize::Medium)
             ->color($isVisible ? 'primary' : 'danger')
-            ->action(fn($record) => $this->toggleColumnVisibility($key));
+            ->action(fn ($record) => $this->toggleColumnVisibility($key));
     }
 
     /**
@@ -205,7 +205,7 @@ trait CanToggleColumns
                 ->icon($this->getToggleAllIcon())
                 ->iconSize(IconSize::Medium)
                 ->color('primary')
-                ->action(fn() => $this->toggleAllColumns()),
+                ->action(fn () => $this->toggleAllColumns()),
         ];
 
         // Add individual column toggle actions
@@ -303,7 +303,7 @@ trait CanToggleColumns
     protected function areAllColumnsVisible(): bool
     {
         return collect($this->toggleableColumns)
-            ->every(fn($col) => ($this->columnToggleState[$this->getColumnKey($col)] ?? true));
+            ->every(fn ($col) => ($this->columnToggleState[$this->getColumnKey($col)] ?? true));
     }
 
     /**
