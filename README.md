@@ -639,28 +639,41 @@ CreatedUpdatedEntry::make('timestamps')
 
 ### SplitButtonDropdownAction
 
-A split button with a main action on the left and a dropdown chevron on the right showing all actions.
+A split button with a main action on the left and a dropdown chevron on the right showing all actions. Works in both **page-level** header actions (`getHeaderActions()`) and **table** header/record actions — it auto-detects table context and injects it into child actions when available.
+
+> **Important:** Only use `Action::make()` (`Filament\Actions\Action`) inside the split button. **Do not** use `CreateAction`, `EditAction`, `DeleteAction`, or any other specialized Filament action class. These specialized actions rely on internal Livewire method routing (e.g. `mountAction('create')`) that breaks when nested inside an `ActionGroup`. The primary (left) button will silently fail to fire. Instead, use a regular `Action::make()` with an explicit `->schema()` and `->action()` callback.
 
 ```php
 use Codenzia\ProjectEssentials\Filament\Actions\SplitButtonDropdownAction;
 
+// Page-level header action
 SplitButtonDropdownAction::make([
-    Action::make('approve')->label('Approve')->color('success'),
-    Action::make('reject')->label('Reject')->color('danger'),
-    Action::make('defer')->label('Defer')->color('warning'),
+    Action::make('createProject')
+        ->label('New Project')
+        ->icon('heroicon-o-plus')
+        ->slideOver()
+        ->model(Project::class)
+        ->schema(ProjectForm::getFields(true))
+        ->action(function (array $data) {
+            $project = Project::create($data);
+        }),
+    Action::make('fromTemplate')
+        ->label('From Template')
+        ->icon('heroicon-o-document-duplicate'),
 ])
-```
 
-### TableSplitButtonDropdownAction
+// Table header action (table context is auto-detected)
+$table->headerActions([
+    SplitButtonDropdownAction::make([
+        Tables\Actions\Action::make('edit')->label('Edit'),
+        Tables\Actions\Action::make('delete')->label('Delete')->color('danger'),
+    ]),
+])
 
-Same as `SplitButtonDropdownAction` but with table context support for row-level actions.
-
-```php
-use Codenzia\ProjectEssentials\Filament\Actions\TableSplitButtonDropdownAction;
-
-TableSplitButtonDropdownAction::make([
-    Tables\Actions\Action::make('edit')->label('Edit'),
-    Tables\Actions\Action::make('delete')->label('Delete')->color('danger'),
+// Wrong — CreateAction will not fire from the primary button
+SplitButtonDropdownAction::make([
+    CreateAction::make(), // Primary button does nothing
+    Action::make('other'),
 ])
 ```
 
