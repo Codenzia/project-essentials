@@ -6,7 +6,6 @@ Essential UI components, form fields, table columns, traits, and helpers for Lar
 
 **UI Components**
 - **Progress** — Circular SVG progress indicator with gradient colors
-- **Carousel / CarouselEntry** — Swiper.js-powered carousel for Blade and Filament infolists
 - **Pagination** — Custom Laravel pagination view with RTL and dark mode support
 - **IconPicker** — Filament form select with 45+ categorized Heroicons
 - **DropdownCheckList** — Multi-select dropdown with search, avatars, and enum support
@@ -892,35 +891,6 @@ A circular progress indicator with SVG arc and gradient colors.
     label="Completion"
     :show-text="true"
 />
-```
-
-### Carousel (Blade)
-
-```blade
-<x-project-essentials::carousel
-    :slides="$slides"
-    :autoplay="true"
-    :indicators="true"
-    :controls="true"
-/>
-```
-
-### CarouselEntry (Filament Infolist)
-
-```php
-use Codenzia\ProjectEssentials\View\Components\CarouselEntry;
-
-CarouselEntry::make('items')
-    ->slidesPerView(3)
-    ->navigation()
-    ->pagination()
-    ->autoplay()
-    ->cardSchema(function (Schema $schema, ?Model $record) {
-        return $schema->components([
-            TextEntry::make('title'),
-            ImageEntry::make('image'),
-        ]);
-    })
 ```
 
 ### Pagination

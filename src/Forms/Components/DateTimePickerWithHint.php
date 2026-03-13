@@ -22,7 +22,7 @@ class DateTimePickerWithHint extends DateTimePicker
         parent::setUp();
 
         $this
-            ->displayFormat(config('app.datetime_format'))
+            ->displayFormat(config('app.datetime_format', 'Y-m-d H:i'))
             ->hintIcon('heroicon-o-information-circle', tooltip: DateHelper::readableDateTimeFormat())
             ->native(false);
     }

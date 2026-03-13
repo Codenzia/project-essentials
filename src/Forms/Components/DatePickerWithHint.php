@@ -31,8 +31,7 @@ class DatePickerWithHint extends DatePicker
         parent::setUp();
 
         $this
-            ->displayFormat(config('app.date_format'))
-            ->date(config('app.date_format'))
+            ->displayFormat(config('app.date_format', 'Y-m-d'))
             ->hintIcon('heroicon-o-information-circle', tooltip: DateHelper::readableDateFormat())
             ->native(false);
     }

@@ -73,15 +73,15 @@ class IconColoredEnumSelect extends Select
             $value = $case->value;
             $label = $class::label($value);
             $icon = $class::icon($value);
-            $color = $class::color($value);
+            $color = $class::color($value, useTailwindColors: false);
 
             if (! $icon || ! $label || ! $color) {
                 throw new InvalidArgumentException("Enum value '{$value}' is missing icon, label, or color in {$class}.");
             }
             $richOption = $this->renderOptionHtml(
-                label: $class::label($value),
-                icon: $class::icon($value),
-                color: $class::color($value)
+                label: $label,
+                icon: $icon,
+                color: $color
             )->toHtml(); // Convert HtmlString to string
             $richOptions[$value] = $richOption;
         }
@@ -105,7 +105,7 @@ class IconColoredEnumSelect extends Select
                     $chips = array_map(fn ($val) => $this->renderChipHtml(
                         label: $class::label($val),
                         icon: $class::icon($val),
-                        color: $class::color($val)
+                        color: $class::color($val, useTailwindColors: false)
                     ), $value);
 
                     return new HtmlString(implode('', $chips));
@@ -114,7 +114,7 @@ class IconColoredEnumSelect extends Select
                 return $this->renderOptionHtml(
                     label: $class::label($value),
                     icon: $class::icon($value),
-                    color: $class::color($value)
+                    color: $class::color($value, useTailwindColors: false)
                 );
             });
 
