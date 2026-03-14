@@ -26,12 +26,15 @@ use Throwable;
  * - Multi-select shows chips with colored icon & background
  * - Searchable by plain label
  * - Auto defaults to first enum case if none provided
+ * - Badge mode: ->badge() renders options as colored background pills
  */
 class IconColoredEnumSelect extends Select
 {
     protected ?string $enumClass = null;
 
     protected ?array $optionsWithLabels = null;
+
+    protected bool $isBadge = false;
 
     /**
      * Optionally accept an enum class at creation.
@@ -45,6 +48,22 @@ class IconColoredEnumSelect extends Select
         }
 
         return $select;
+    }
+
+    /**
+     * Enable badge mode — renders options as colored background pills
+     * instead of icon + colored text.
+     */
+    public function badge(bool $badge = true): static
+    {
+        $this->isBadge = $badge;
+
+        // Re-apply enum class to rebuild options with badge rendering
+        if ($this->enumClass) {
+            $this->enumClass($this->enumClass);
+        }
+
+        return $this;
     }
 
     /**
@@ -64,7 +83,7 @@ class IconColoredEnumSelect extends Select
 
         // Prepare simple searchable labels
         $this->optionsWithLabels = collect($class::cases())
-            ->mapWithKeys(fn ($c) => [$c->value => $class::label($c->value)])
+            ->mapWithKeys(fn($c) => [$c->value => $class::label($c->value)])
             ->toArray();
 
         // Render rich dropdown options HTML as strings
@@ -78,11 +97,11 @@ class IconColoredEnumSelect extends Select
             if (! $icon || ! $label || ! $color) {
                 throw new InvalidArgumentException("Enum value '{$value}' is missing icon, label, or color in {$class}.");
             }
-            $richOption = $this->renderOptionHtml(
-                label: $label,
-                icon: $icon,
-                color: $color
-            )->toHtml(); // Convert HtmlString to string
+
+            $richOption = $this->isBadge
+                ? $this->renderBadgeOptionHtml(label: $label, icon: $icon, color: $color)->toHtml()
+                : $this->renderOptionHtml(label: $label, icon: $icon, color: $color)->toHtml();
+
             $richOptions[$value] = $richOption;
         }
 
@@ -90,10 +109,10 @@ class IconColoredEnumSelect extends Select
             ->allowHtml()
             ->native(false)
             ->getSearchResultsUsing(
-                fn (string $search) => collect($this->optionsWithLabels)
-                    ->filter(fn (string $label) => Str::contains(mb_strtolower($label), mb_strtolower($search)))
+                fn(string $search) => collect($this->optionsWithLabels)
+                    ->filter(fn(string $label) => Str::contains(mb_strtolower($label), mb_strtolower($search)))
                     ->keys()
-                    ->mapWithKeys(fn ($key) => [$key => $richOptions[$key]])
+                    ->mapWithKeys(fn($key) => [$key => $richOptions[$key]])
                     ->toArray()
             )
             ->getOptionLabelUsing(function ($value) use ($class) {
@@ -102,13 +121,21 @@ class IconColoredEnumSelect extends Select
                 }
 
                 if (is_array($value)) {
-                    $chips = array_map(fn ($val) => $this->renderChipHtml(
+                    $chips = array_map(fn($val) => $this->renderChipHtml(
                         label: $class::label($val),
                         icon: $class::icon($val),
                         color: $class::color($val, useTailwindColors: false)
                     ), $value);
 
                     return new HtmlString(implode('', $chips));
+                }
+
+                if ($this->isBadge) {
+                    return $this->renderBadgeOptionHtml(
+                        label: $class::label($value),
+                        icon: $class::icon($value),
+                        color: $class::color($value, useTailwindColors: false)
+                    );
                 }
 
                 return $this->renderOptionHtml(
@@ -132,7 +159,7 @@ class IconColoredEnumSelect extends Select
     }
 
     /**
-     * Render a dropdown option: icon + colored label.
+     * Render a dropdown option: icon + colored label (default mode).
      */
     protected function renderOptionHtml(string $label, string $icon, string $color): HtmlString
     {
@@ -144,6 +171,25 @@ class IconColoredEnumSelect extends Select
             <span class="flex items-center gap-2">
                 {$iconSvg}
                 <span class="{$textClass} font-medium">{$this->escape($label)}</span>
+            </span>
+            HTML
+        );
+    }
+
+    /**
+     * Render a dropdown option as a colored background pill (badge mode).
+     */
+    protected function renderBadgeOptionHtml(string $label, string $icon, string $color): HtmlString
+    {
+        $bg = TailwindHelper::bg($color, '600');
+        $iconSvg = $this->renderIconSvg($icon, 'w-3.5 h-3.5 text-white');
+        $escaped = $this->escape($label);
+
+        return new HtmlString(
+            <<<HTML
+            <span class="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full {$bg} text-white text-sm font-normal whitespace-nowrap">
+                {$iconSvg}
+                {$escaped}
             </span>
             HTML
         );

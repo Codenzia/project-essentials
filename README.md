@@ -18,6 +18,7 @@ Essential UI components, form fields, table columns, traits, and helpers for Lar
 - **HtmlColumn** — Render raw HTML content in table columns
 - **UserAvatarColumn / UserAvatarEntry** — User avatar display with fallback
 - **TagColumn / TagEntry** — Tag display with color randomization and context limits
+- **ColoredPillsColumn / ColoredPillsEntry** — Generic colored pill badges with per-item colors, sizes, enum support, and hover card overflow
 - **PriorityColumn / PriorityEntry** — Priority display with icon, color, and label from enums
 - **CircularProgressBar** — SVG circular progress bar with gradient
 - **CreatedUpdatedColumn / CreatedUpdatedEntry** — Created/updated timestamps with user avatars
@@ -358,15 +359,26 @@ Size configuration mixin for avatar columns/entries. Used internally by `UserAva
 
 ### IconColoredEnumSelect
 
-A rich Filament Select with colored icons for PHP enums using `IconColoredEnum`.
+A rich Filament Select with colored icons for PHP enums using `IconColoredEnum`. Supports two visual modes: **icon + colored text** (default) and **badge** (colored background pills with icon).
 
 ```php
 use Codenzia\ProjectEssentials\Forms\Components\IconColoredEnumSelect;
 
+// Default mode: icon + colored text in dropdown
 IconColoredEnumSelect::make('status')
     ->enumClass(StatusEnum::class)
     ->label('Status')
+
+// Badge mode: colored background pills with icon
+IconColoredEnumSelect::make('proficiency')
+    ->enumClass(ProficiencyLevelEnum::class)
+    ->badge()
 ```
+
+| Method | Description |
+|--------|-------------|
+| `enumClass(string)` | The enum class (must use `IconColoredEnum` trait) |
+| `badge(bool)` | Enable badge mode — renders options as colored background pills with icon (default: `false`) |
 
 ### DatePickerWithHint
 
@@ -496,6 +508,62 @@ use Codenzia\ProjectEssentials\Tables\Columns\TagColumn;
 TagColumn::make('tags')
     ->label('Tags')
 ```
+
+### ColoredPillsColumn / ColoredPillsEntry
+
+Generic colored pill badge component for tables and infolists. Each item can have its own color, size, and tooltip. Overflow items are shown in a polished hover card (teleported to body to escape table overflow). Both components share a single blade view.
+
+Supports two modes:
+- **Manual** — provide `itemColor()`, `itemTooltip()`, `itemSubtitle()` closures for full control
+- **Enum** — pass an `IconColoredEnum`-based enum via `enum()` to auto-resolve colors, tooltips, and subtitles
+
+```php
+use Codenzia\ProjectEssentials\Tables\Columns\ColoredPillsColumn;
+use Codenzia\ProjectEssentials\Infolists\Components\ColoredPillsEntry;
+
+// Enum mode — colors, tooltips, and subtitles auto-resolved from ProficiencyLevelEnum
+ColoredPillsColumn::make('skills')
+    ->label('Skills')
+    ->visibleLimit(3)
+    ->itemLabel(fn ($item) => $item->name)
+    ->enum(ProficiencyLevelEnum::class, 'pivot.proficiency')
+    ->emptyLabel('No Skills')
+    ->hoverLabel(':count more skill|:count more skills')
+
+// Same API for infolists
+ColoredPillsEntry::make('skills')
+    ->label('Skills')
+    ->visibleLimit(3)
+    ->itemLabel(fn ($item) => $item->name)
+    ->enum(ProficiencyLevelEnum::class, 'pivot.proficiency')
+    ->emptyLabel('No Skills')
+    ->hoverLabel(':count more skill|:count more skills')
+
+// Manual mode — full control with closures
+ColoredPillsColumn::make('categories')
+    ->visibleLimit(2)
+    ->itemColor(fn ($item) => 'bg-blue-100 border-blue-300 text-blue-700 dark:bg-blue-500/15 dark:border-blue-400/50 dark:text-blue-400')
+    ->emptyLabel('No Categories')
+
+// Custom item resolver
+ColoredPillsColumn::make('permissions')
+    ->items(fn ($record) => $record->roles->flatMap->permissions->unique('id'))
+    ->itemLabel(fn ($item) => $item->display_name)
+```
+
+| Method | Description |
+|--------|-------------|
+| `visibleLimit(int)` | Max items shown before `+N` overflow badge (default: 3) |
+| `items(Closure)` | Custom resolver `fn($record) => Collection` (default: `$record->{columnName}`) |
+| `itemLabel(string\|Closure)` | Label accessor — attribute name or `fn($item) => string` (default: `'name'`) |
+| `enum(string, string)` | Auto-resolve colors/tooltips/subtitles from an `IconColoredEnum`. Args: enum class, dot-notation attribute path (e.g. `'pivot.proficiency'`) |
+| `itemColor(Closure)` | CSS classes per item `fn($item) => string` — overrides enum colors if both set |
+| `itemSize(Closure)` | Size class per item `fn($item) => string` (default: `'text-xs'`) |
+| `itemTooltip(Closure)` | Tooltip per item `fn($item) => ?string` — overrides enum tooltips if both set |
+| `itemSubtitle(Closure)` | Subtitle shown next to label in hover card `fn($item) => ?string` — overrides enum subtitles |
+| `emptyLabel(string)` | Text when collection is empty (default: `'No Items'`) |
+| `hoverLabel(string)` | Singular\|plural for hover card header (default: `':count more item\|:count more items'`) |
+| `tailwindColorToBadgeClasses(string)` | Static helper: converts a Tailwind color name (e.g. `'danger'`, `'blue'`) to full light/dark badge CSS classes |
 
 ### PriorityColumn
 
