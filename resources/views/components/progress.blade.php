@@ -16,7 +16,7 @@
 
         <div class="absolute inset-0 flex flex-col items-center justify-end pb-1 mb-6"
             style="container-type: inline-size;">
-            <p class="text-xl font-semibold dark:text-white leading-tight"
+            <p class="text-xl font-semibold text-gray-900 dark:text-white leading-tight"
                 style="font-size: clamp(0.875rem, 10cqi, 1.25rem);">{{ $progress }} %</p>
             @if ($showText)
                 <p class="text-md font-normal dark:text-gray-400 text-gray-500"

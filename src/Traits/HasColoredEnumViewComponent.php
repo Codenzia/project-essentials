@@ -40,16 +40,12 @@ trait HasColoredEnumViewComponent
         $this->tooltip(fn ($state): ?string => $state instanceof UnitEnum ? $state->getLabel() : null);
 
         $this->formatStateUsing(function ($state) use ($showText): ?string {
-            // 1. If it's a valid Enum instance, show the label
             if ($state instanceof UnitEnum) {
                 return $showText ? $state?->getLabel() : '&nbsp;';
             }
 
-            // 2. Fallback: If state is null/invalid, show the defaultText
             return $this->defaultText ?? $state;
         });
-
-        $this->html();
 
         // Automatically set color, defaulting to 'gray' if state isn't an enum
         $this->color(fn ($state): string | array | null => ($state instanceof UnitEnum) ? $state?->getColor(false) : Color::Gray);

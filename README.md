@@ -138,6 +138,7 @@ enum StatusEnum: string
             self::INACTIVE->value => 'danger',
         ];
     }
+
 }
 
 // Usage

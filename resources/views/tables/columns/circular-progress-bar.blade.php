@@ -21,7 +21,7 @@
         @endif
     </svg>
     <div
-        class="absolute text-xs fw-600 transform -translate-x-1/2 -translate-y-1/2 top-1/2 left-1/2 dark:text-white">
+        class="absolute text-xs fw-600 transform -translate-x-1/2 -translate-y-1/2 top-1/2 left-1/2 text-gray-900 dark:text-white">
         {{ $state > 0 ? number_format($state, 1) : 0 }}%
     </div>
 </div>
