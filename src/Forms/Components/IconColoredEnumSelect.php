@@ -83,7 +83,7 @@ class IconColoredEnumSelect extends Select
 
         // Prepare simple searchable labels
         $this->optionsWithLabels = collect($class::cases())
-            ->mapWithKeys(fn($c) => [$c->value => $class::label($c->value)])
+            ->mapWithKeys(fn ($c) => [$c->value => $class::label($c->value)])
             ->toArray();
 
         // Render rich dropdown options HTML as strings
@@ -109,10 +109,10 @@ class IconColoredEnumSelect extends Select
             ->allowHtml()
             ->native(false)
             ->getSearchResultsUsing(
-                fn(string $search) => collect($this->optionsWithLabels)
-                    ->filter(fn(string $label) => Str::contains(mb_strtolower($label), mb_strtolower($search)))
+                fn (string $search) => collect($this->optionsWithLabels)
+                    ->filter(fn (string $label) => Str::contains(mb_strtolower($label), mb_strtolower($search)))
                     ->keys()
-                    ->mapWithKeys(fn($key) => [$key => $richOptions[$key]])
+                    ->mapWithKeys(fn ($key) => [$key => $richOptions[$key]])
                     ->toArray()
             )
             ->getOptionLabelUsing(function ($value) use ($class) {
@@ -121,7 +121,7 @@ class IconColoredEnumSelect extends Select
                 }
 
                 if (is_array($value)) {
-                    $chips = array_map(fn($val) => $this->renderChipHtml(
+                    $chips = array_map(fn ($val) => $this->renderChipHtml(
                         label: $class::label($val),
                         icon: $class::icon($val),
                         color: $class::color($val, useTailwindColors: false)
