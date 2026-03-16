@@ -875,9 +875,10 @@ A multi-select dropdown with checkboxes, optional search, avatar support, and en
 
 ### ResponsiveTabs
 
-A responsive tab component that automatically folds overflow tabs into a "More" dropdown when space is limited. Supports Livewire binding, localStorage persistence, badges, icons, and disabled tabs.
+A responsive tab component that automatically folds overflow tabs into a "More" dropdown when space is limited. Supports Livewire binding, localStorage persistence, badges, icons, disabled tabs, and two layout modes.
 
 ```blade
+{{-- Inline layout (default) — icon and label side by side --}}
 <x-project-essentials::responsive-tabs
     :tabs="[
         'overview' => ['label' => 'Overview', 'icon' => 'heroicon-o-home'],
@@ -888,7 +889,25 @@ A responsive tab component that automatically folds overflow tabs into a "More" 
     align="left"
     persist="my-page-tabs"
 />
+
+{{-- Stacked layout — icon on top, label below (compact, fits more tabs) --}}
+<x-project-essentials::responsive-tabs
+    :tabs="$this->getTabs()"
+    wire:model="activeTab"
+    layout="stacked"
+/>
 ```
+
+| Prop | Type | Default | Description |
+|------|------|---------|-------------|
+| `tabs` | array | `[]` | Array of tab definitions (keyed or indexed) |
+| `active` | string | `null` | Initial active tab ID (when not using `wire:model`) |
+| `align` | string | `'center'` | Tab alignment: `'left'`, `'center'`, or `'right'` |
+| `moreLabel` | string | `'More'` | Label for the overflow dropdown button |
+| `persist` | string | `null` | localStorage key for tab persistence |
+| `layout` | string | `'inline'` | `'inline'` (icon + label side by side) or `'stacked'` (icon above label — more compact) |
+
+**Stacked layout** is ideal when you have many tabs (8+). It renders each tab as a vertical column with the icon on top and label below, reducing per-tab width by ~40% so more tabs fit before overflowing into the "More" dropdown. Badges are rendered as floating pills on the icon's top-right corner.
 
 Requires importing the JS component in your app.js:
 ```js

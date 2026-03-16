@@ -30,6 +30,14 @@
             align="left"
         />
 
+    Stacked layout (icon above label — compact, fits more tabs):
+
+        <x-project-essentials::responsive-tabs
+            :tabs="$this->getTabs()"
+            wire:model="activeTab"
+            layout="stacked"
+        />
+
     =====================================================================================
     PROPS
     =====================================================================================
@@ -41,6 +49,7 @@
     | align      | string  | 'center' | Tab alignment: 'left', 'center', or 'right'   |
     | moreLabel  | string  | 'More'   | Label for the overflow dropdown button         |
     | persist    | string  | null     | localStorage key for tab persistence           |
+    | layout     | string  | 'inline' | 'inline' (icon+label side by side) or 'stacked' (icon above label) |
 
     =====================================================================================
     TAB OPTIONS
@@ -78,6 +87,7 @@
     'moreLabel' => null,
     'align' => 'center',
     'persist' => null,
+    'layout' => 'inline', // 'inline' (icon + label side by side) or 'stacked' (icon above label)
 ])
 
 @php
@@ -109,33 +119,52 @@
         'right' => 'justify-end',
     ];
     $alignClass = $alignClasses[$align] ?? 'justify-center';
+    $isStacked = $layout === 'stacked';
 @endphp
 
 <div @if ($wireModel) x-data="responsiveTabs({ activeTabInit: $wire.entangle('{{ $wireModel }}').live, tabs: {{ $tabsJson }}, persistKey: {{ $persistJson }} })"
     @else
         x-data="responsiveTabs({ activeTabInit: '{{ $defaultActive }}', tabs: {{ $tabsJson }}, persistKey: {{ $persistJson }} })" @endif
-    {{ $attributes->except(['tabs', 'active', 'moreLabel', 'wire:model', 'wire:model.live', 'align', 'persist'])->class(['w-full']) }}>
-    <nav x-ref="nav" class="flex items-center gap-2 {{ $alignClass }}">
+    {{ $attributes->except(['tabs', 'active', 'moreLabel', 'wire:model', 'wire:model.live', 'align', 'persist', 'layout'])->class(['w-full']) }}>
+    <nav x-ref="nav" class="flex items-center {{ $isStacked ? 'gap-3' : 'gap-2' }} {{ $alignClass }}">
         @foreach ($normalizedTabs as $index => $tab)
             <div wire:key="tab-{{ $tab['id'] }}-{{ $index }}" data-tab-item="{{ $index }}"
                 x-on:click="{{ $tab['disabled'] ?? false ? '' : 'select(' . $index . ')' }}"
                 @if ($tab['disabled'] ?? false) aria-disabled="true" @endif
-                class="flex items-center gap-2 px-4 py-2.5 font-medium transition-all whitespace-nowrap shrink-0 border-b-2 border-transparent cursor-pointer {{ $tab['disabled'] ?? false ? 'opacity-50 cursor-not-allowed' : '' }}"
+                @if ($isStacked) class="flex flex-col items-center gap-1 px-3 py-1.5 font-medium transition-all whitespace-nowrap shrink-0 border-b-2 border-transparent cursor-pointer rounded-lg relative group {{ $tab['disabled'] ?? false ? 'opacity-50 cursor-not-allowed' : '' }}"
+                @else
+                    class="flex items-center gap-2 px-4 py-2.5 font-medium transition-all whitespace-nowrap shrink-0 border-b-2 border-transparent cursor-pointer {{ $tab['disabled'] ?? false ? 'opacity-50 cursor-not-allowed' : '' }}" @endif
                 x-bind:class="{
-                    'text-primary-500 dark:text-primary-400 !border-gray-300 dark:!border-gray-600': activeTab === '{{ $tab['id'] }}',
-                    'text-gray-600 dark:text-gray-400 hover:text-primary-400 dark:hover:text-gray-200': activeTab !== '{{ $tab['id'] }}',
-                    '!hidden': !isVisible({{ $index }})
+                    @if ($isStacked) 'text-primary-500 dark:text-primary-400 !border-primary-500 dark:!border-primary-400 bg-primary-50 dark:bg-primary-900/20': activeTab === '{{ $tab['id'] }}',
+                        'text-gray-500 dark:text-gray-400 hover:text-primary-400 dark:hover:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-800': activeTab !== '{{ $tab['id'] }}',
+                    @else
+                        'text-primary-500 dark:text-primary-400 !border-gray-300 dark:!border-gray-600': activeTab === '{{ $tab['id'] }}',
+                        'text-gray-600 dark:text-gray-400 hover:text-primary-400 dark:hover:text-gray-200': activeTab !== '{{ $tab['id'] }}', @endif
+                        '!hidden': !isVisible({{ $index }})
                 }">
                 @isset($tab['icon'])
                     @if (str_starts_with($tab['icon'], 'heroicon-') || View::exists('components.' . $tab['icon']))
-                        <x-dynamic-component :component="$tab['icon']" class="w-5 h-5" />
+                        @if ($isStacked)
+                            <span class="relative">
+                                <x-dynamic-component :component="$tab['icon']" class="w-5 h-5" />
+                                @isset($tab['badge'])
+                                    <span class="absolute -top-1.5 -end-2.5 min-w-[16px] h-4 px-1 text-[10px] font-semibold leading-4 text-center text-white bg-primary-500 rounded-full">{{ $tab['badge'] }}</span>
+                                @endisset
+                            </span>
+                        @else
+                            <x-dynamic-component :component="$tab['icon']" class="w-5 h-5" />
+                        @endif
                     @endif
                 @endisset
-                <span>{{ $tab['label'] }}</span>
+                <span class="{{ $isStacked ? 'text-[13px] leading-tight' : '' }}">{{ $tab['label'] }}</span>
                 @isset($tab['badge'])
-                    <x-filament::badge color="primary" size="sm">
-                        {{ $tab['badge'] }}
-                    </x-filament::badge>
+                    @if ($isStacked)
+                        {{-- Badge rendered inside icon wrapper above --}}
+                    @else
+                        <x-filament::badge color="primary" size="sm">
+                            {{ $tab['badge'] }}
+                        </x-filament::badge>
+                    @endif
                 @endisset
             </div>
         @endforeach
@@ -143,21 +172,33 @@
         {{-- More Dropdown --}}
         <div x-ref="moreBtn" x-show="hasOverflow" x-cloak class="relative shrink-0"
             x-on:click.outside="moreOpen = false">
-            <div x-on:click="moreOpen = !moreOpen" type="button"
-                class="flex items-center gap-2 px-3 py-2.5 font-medium transition-all border-b-2 border-transparent cursor-pointer"
+            <div x-on:click.stop="moreOpen = !moreOpen" type="button"
+                @if ($isStacked) class="flex flex-col items-center gap-1 px-3 py-1.5 font-medium transition-all border-b-2 border-transparent cursor-pointer rounded-lg"
+                @else
+                    class="flex items-center gap-2 px-3 py-2.5 font-medium transition-all border-b-2 border-transparent cursor-pointer" @endif
                 x-bind:class="isActiveInOverflow
                     ?
-                    'text-primary-500 dark:text-primary-400 !border-gray-300 dark:!border-gray-600' :
-                    'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'">
-                <x-heroicon-m-ellipsis-horizontal class="w-5 h-5" />
-                <span>{{ $moreLabel ?? __('More') }}</span>
-                <span x-show="isActiveInOverflow" x-text="'(' + getCurrentTab()?.label + ')'"
-                    class="text-primary-500 dark:text-primary-400 text-sm"></span>
-                <span x-show="!isActiveInOverflow"
-                    class="text-xs bg-gray-200 dark:bg-gray-700 px-1.5 py-0.5 rounded-full min-w-[1.25rem] text-center"
-                    x-text="overflowCount"></span>
-                <x-heroicon-m-chevron-down class="w-4 h-4 transition-transform duration-200"
-                    x-bind:class="{ 'rotate-180': moreOpen }" />
+                    '{{ $isStacked ? 'text-primary-500 dark:text-primary-400 !border-primary-500 dark:!border-primary-400 bg-primary-50 dark:bg-primary-900/20' : 'text-primary-500 dark:text-primary-400 !border-gray-300 dark:!border-gray-600' }}' :
+                    'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 {{ $isStacked ? 'hover:bg-gray-50 dark:hover:bg-gray-800' : '' }}'">
+                @if ($isStacked)
+                    <div class="relative">
+                        <x-heroicon-m-ellipsis-horizontal class="w-5 h-5" />
+                        <span x-show="!isActiveInOverflow"
+                            class="absolute -top-1.5 -end-2.5 min-w-[14px] h-3.5 px-0.5 text-[9px] font-semibold leading-3.5 text-center text-white bg-gray-400 dark:bg-gray-600 rounded-full"
+                            x-text="overflowCount"></span>
+                    </div>
+                    <span class="text-xs leading-tight">{{ $moreLabel ?? __('More') }}</span>
+                @else
+                    <x-heroicon-m-ellipsis-horizontal class="w-5 h-5" />
+                    <span>{{ $moreLabel ?? __('More') }}</span>
+                    <span x-show="isActiveInOverflow" x-text="'(' + getCurrentTab()?.label + ')'"
+                        class="text-primary-500 dark:text-primary-400 text-sm"></span>
+                    <span x-show="!isActiveInOverflow"
+                        class="text-xs bg-gray-200 dark:bg-gray-700 px-1.5 py-0.5 rounded-full min-w-[1.25rem] text-center"
+                        x-text="overflowCount"></span>
+                    <x-heroicon-m-chevron-down class="w-4 h-4 transition-transform duration-200"
+                        x-bind:class="{ 'rotate-180': moreOpen }" />
+                @endif
             </div>
 
             <div x-show="moreOpen" x-transition:enter="transition ease-out duration-150"
