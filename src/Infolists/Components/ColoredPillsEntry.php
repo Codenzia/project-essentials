@@ -6,6 +6,7 @@ use Closure;
 use Codenzia\ProjectEssentials\Tables\Columns\ColoredPillsColumn;
 use Codenzia\ProjectEssentials\Traits\IconColoredEnum;
 use Filament\Infolists\Components\Entry;
+use Illuminate\Support\Collection;
 use UnitEnum;
 
 class ColoredPillsEntry extends Entry
@@ -18,7 +19,7 @@ class ColoredPillsEntry extends Entry
     protected ?Closure $itemsResolver = null;
 
     /** Get display label from each item */
-    protected string|Closure $itemLabelUsing = 'name';
+    protected string | Closure $itemLabelUsing = 'name';
 
     /** Get CSS classes for each item's badge */
     protected ?Closure $itemColorUsing = null;
@@ -52,36 +53,42 @@ class ColoredPillsEntry extends Entry
     public function visibleLimit(int $limit): static
     {
         $this->visibleLimit = $limit;
+
         return $this;
     }
 
     public function items(Closure $resolver): static
     {
         $this->itemsResolver = $resolver;
+
         return $this;
     }
 
-    public function itemLabel(string|Closure $accessor): static
+    public function itemLabel(string | Closure $accessor): static
     {
         $this->itemLabelUsing = $accessor;
+
         return $this;
     }
 
     public function itemColor(Closure $callback): static
     {
         $this->itemColorUsing = $callback;
+
         return $this;
     }
 
     public function itemSize(Closure $callback): static
     {
         $this->itemSizeUsing = $callback;
+
         return $this;
     }
 
     public function itemTooltip(Closure $callback): static
     {
         $this->itemTooltipUsing = $callback;
+
         return $this;
     }
 
@@ -89,18 +96,21 @@ class ColoredPillsEntry extends Entry
     {
         $this->itemSubtitleUsing = $callback;
         $this->showSubtitleInHover = true;
+
         return $this;
     }
 
     public function emptyLabel(string $label): static
     {
         $this->emptyLabel = $label;
+
         return $this;
     }
 
     public function hoverLabel(string $label): static
     {
         $this->hoverLabel = $label;
+
         return $this;
     }
 
@@ -133,7 +143,7 @@ class ColoredPillsEntry extends Entry
         return $this->visibleLimit;
     }
 
-    public function resolveItems($record): \Illuminate\Support\Collection
+    public function resolveItems($record): Collection
     {
         if ($this->itemsResolver) {
             $items = ($this->itemsResolver)($record);
@@ -163,6 +173,7 @@ class ColoredPillsEntry extends Entry
             $enumInstance = $this->resolveEnumInstance($item);
             if ($enumInstance) {
                 $color = $enumInstance->getColor(true);
+
                 return ColoredPillsColumn::tailwindColorToBadgeClasses($color);
             }
         }
@@ -206,6 +217,7 @@ class ColoredPillsEntry extends Entry
             $enumInstance = $this->resolveEnumInstance($item);
             if ($enumInstance) {
                 $this->showSubtitleInHover = true;
+
                 return $enumInstance->getLabel();
             }
         }
