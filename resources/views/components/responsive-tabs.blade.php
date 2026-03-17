@@ -79,6 +79,7 @@
     | badge    | int/str | No       | Badge value (uses Filament badge, primary color) |
     | params   | array   | No       | Custom parameters passed through on tab change   |
     | disabled | bool    | No       | Whether the tab is disabled                      |
+    | iconColor| string  | No       | Tailwind text color class for the icon (e.g. 'text-amber-500') |
 --}}
 
 @props([
@@ -144,15 +145,28 @@
                 }">
                 @isset($tab['icon'])
                     @if (str_starts_with($tab['icon'], 'heroicon-') || View::exists('components.' . $tab['icon']))
+                        @php $iconColor = $tab['iconColor'] ?? null; @endphp
                         @if ($isStacked)
                             <span class="relative">
-                                <x-dynamic-component :component="$tab['icon']" class="w-5 h-5" />
+                                @if($iconColor)
+                                    <span @class([$iconColor]) x-bind:class="{ '!text-primary-500 dark:!text-primary-400': activeTab === '{{ $tab['id'] }}' }">
+                                        <x-dynamic-component :component="$tab['icon']" class="w-5 h-5" />
+                                    </span>
+                                @else
+                                    <x-dynamic-component :component="$tab['icon']" class="w-5 h-5" />
+                                @endif
                                 @isset($tab['badge'])
                                     <span class="absolute -top-1.5 -end-2.5 min-w-[16px] h-4 px-1 text-[10px] font-semibold leading-4 text-center text-white bg-primary-500 rounded-full">{{ $tab['badge'] }}</span>
                                 @endisset
                             </span>
                         @else
-                            <x-dynamic-component :component="$tab['icon']" class="w-5 h-5" />
+                            @if($iconColor)
+                                <span @class([$iconColor]) x-bind:class="{ '!text-primary-500 dark:!text-primary-400': activeTab === '{{ $tab['id'] }}' }">
+                                    <x-dynamic-component :component="$tab['icon']" class="w-5 h-5" />
+                                </span>
+                            @else
+                                <x-dynamic-component :component="$tab['icon']" class="w-5 h-5" />
+                            @endif
                         @endif
                     @endif
                 @endisset
@@ -218,7 +232,13 @@
                         }">
                         @isset($tab['icon'])
                             @if (str_starts_with($tab['icon'], 'heroicon-') || View::exists('components.' . $tab['icon']))
-                                <x-dynamic-component :component="$tab['icon']" class="w-5 h-5" />
+                                @if($tab['iconColor'] ?? null)
+                                    <span @class([$tab['iconColor']]) x-bind:class="{ '!text-primary-500 dark:!text-primary-400': activeTab === '{{ $tab['id'] }}' }">
+                                        <x-dynamic-component :component="$tab['icon']" class="w-5 h-5" />
+                                    </span>
+                                @else
+                                    <x-dynamic-component :component="$tab['icon']" class="w-5 h-5" />
+                                @endif
                             @endif
                         @endisset
                         <span>{{ $tab['label'] }}</span>

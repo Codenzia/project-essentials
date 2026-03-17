@@ -896,6 +896,16 @@ A responsive tab component that automatically folds overflow tabs into a "More" 
     wire:model="activeTab"
     layout="stacked"
 />
+
+{{-- With colored icons --}}
+<x-project-essentials::responsive-tabs
+    :tabs="[
+        'budget' => ['label' => 'Budget', 'icon' => 'heroicon-o-banknotes', 'iconColor' => 'text-emerald-500'],
+        'risks' => ['label' => 'Risks', 'icon' => 'heroicon-o-exclamation-triangle', 'iconColor' => 'text-amber-500'],
+        'files' => ['label' => 'Files', 'icon' => 'heroicon-o-folder', 'iconColor' => 'text-blue-400'],
+    ]"
+    wire:model="activeTab"
+/>
 ```
 
 | Prop | Type | Default | Description |
@@ -906,6 +916,18 @@ A responsive tab component that automatically folds overflow tabs into a "More" 
 | `moreLabel` | string | `'More'` | Label for the overflow dropdown button |
 | `persist` | string | `null` | localStorage key for tab persistence |
 | `layout` | string | `'inline'` | `'inline'` (icon + label side by side) or `'stacked'` (icon above label — more compact) |
+
+**Tab options** — each entry in the `tabs` array supports:
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| `id` | string | Yes* | Unique identifier (*auto from key if keyed array) |
+| `label` | string | Yes | Display text for the tab |
+| `icon` | string | No | Icon component name (e.g. `'heroicon-o-home'`) |
+| `iconColor` | string | No | Tailwind text color class for the icon (e.g. `'text-amber-500'`). Overridden by primary color when the tab is active. |
+| `badge` | int/string | No | Badge value (rendered as Filament badge or floating pill in stacked mode) |
+| `params` | array | No | Custom parameters passed through on tab change |
+| `disabled` | bool | No | Whether the tab is disabled |
 
 **Stacked layout** is ideal when you have many tabs (8+). It renders each tab as a vertical column with the icon on top and label below, reducing per-tab width by ~40% so more tabs fit before overflowing into the "More" dropdown. Badges are rendered as floating pills on the icon's top-right corner.
 
