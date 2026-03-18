@@ -52,7 +52,7 @@ Essential UI components, form fields, table columns, traits, and helpers for Lar
 - **HasGridLayoutSwitcher** — Grid layout size with session persistence
 - **HasDashboardDateFilter** — Dashboard widget date filtering
 - **HasHeaderFormActions** — Mirror form footer actions to page header
-- **HasPageSettings** — Per-user page settings modal with cache persistence
+- **HasPageSettings** — Database-backed per-user page settings with presets, grouping, reordering, live preview, and admin bulk-apply
 - **HasColoredEnumViewComponent** — Enum coloring for columns/entries
 - **HasProgressBarViewComponent** — Configurable progress bar rendering
 - **HasUserAvatarViewComponent** — Size configuration for avatar columns/entries
@@ -74,6 +74,13 @@ Publish the config (optional):
 
 ```bash
 php artisan vendor:publish --tag="project-essentials-config"
+```
+
+Publish and run migrations (required for HasPageSettings):
+
+```bash
+php artisan vendor:publish --tag="project-essentials-migrations"
+php artisan migrate
 ```
 
 Publish views for customization (optional):
@@ -274,7 +281,11 @@ class EditUser extends EditRecord
 
 ### HasPageSettings
 
-Adds a per-user settings modal to any Filament page with cache persistence.
+Database-backed per-user settings modal for any Filament page or widget. Supports section grouping, admin presets, live preview, reset to defaults, scoped settings, and bulk-apply to roles/teams.
+
+**Requires migration** — run `php artisan vendor:publish --tag="project-essentials-migrations" && php artisan migrate`
+
+#### Basic Usage (raw Filament components)
 
 ```php
 use Codenzia\ProjectEssentials\Traits\HasPageSettings;
@@ -293,10 +304,189 @@ class ListInvoices extends ListRecords
         ];
     }
 
-    // Read a setting value anywhere
-    $showArchived = $this->getPageSetting('show_archived', false);
+    // Read a setting value anywhere in the page
+    public function getEloquentQuery(): Builder
+    {
+        $query = parent::getEloquentQuery();
+
+        if ($this->getPageSetting('show_archived', false)) {
+            $query->withArchived();
+        }
+
+        return $query;
+    }
 }
 ```
+
+#### Fluent Definitions with PageSettingDefinition
+
+Use the fluent builder for grouped settings with labels, descriptions, and defaults:
+
+```php
+use Codenzia\ProjectEssentials\Models\PageSettingDefinition;
+use Codenzia\ProjectEssentials\Traits\HasPageSettings;
+
+class Dashboard extends Page
+{
+    use HasPageSettings;
+
+    protected function getHeaderActions(): array
+    {
+        return [
+            $this->settings([
+                // KPI Cards group
+                PageSettingDefinition::checkbox('show_revenue')
+                    ->label('Revenue')
+                    ->description('Monthly revenue breakdown and trends')
+                    ->group('KPI Cards')
+                    ->default(true),
+
+                PageSettingDefinition::checkbox('show_tasks')
+                    ->label('Active Tasks')
+                    ->group('KPI Cards')
+                    ->default(true),
+
+                // Display group
+                PageSettingDefinition::select('default_view')
+                    ->label('Default View')
+                    ->options(['table' => 'Table', 'grid' => 'Grid'])
+                    ->group('Display')
+                    ->default('table'),
+
+                PageSettingDefinition::toggle('compact_mode')
+                    ->label('Compact Mode')
+                    ->description('Reduce spacing between elements')
+                    ->group('Display')
+                    ->default(false),
+            ]),
+        ];
+    }
+}
+```
+
+#### Live Preview
+
+Enable reactive updates that apply instantly as the user toggles settings (before submitting):
+
+```php
+class Dashboard extends Page
+{
+    use HasPageSettings;
+
+    protected function pageSettingsLivePreview(): bool
+    {
+        return true;
+    }
+
+    protected function onPageSettingPreviewUpdated(string $key, mixed $value): void
+    {
+        // Reactively update your page state
+        if (str_starts_with($key, 'smartStatsVisibility.')) {
+            $this->calculateMetrics();
+        }
+    }
+}
+```
+
+#### Scoped Settings
+
+Store different settings per context (e.g., per project):
+
+```php
+class ProjectBoard extends Page
+{
+    use HasPageSettings;
+
+    public Project $project;
+
+    protected function getPageSettingsScope(): ?string
+    {
+        return (string) $this->project->id;
+    }
+}
+```
+
+#### Admin Presets
+
+Save and load named configurations:
+
+```php
+// Save current settings as a preset
+$this->saveAsPageSettingsPreset('Manager View', isDefault: true);
+
+// Apply a preset by ID
+$this->applyPageSettingsPreset($presetId);
+
+// Delete a preset
+$this->deletePageSettingsPreset($presetId);
+```
+
+When presets exist for a page, a "Load Preset" dropdown automatically appears at the top of the settings modal.
+
+#### Bulk Apply (Admin)
+
+Push settings to all users with a specific role or in a department:
+
+```php
+// Apply to all users with the "manager" role
+$this->applyPageSettingsToRole('manager');
+
+// Apply to all users in a department
+$this->applyPageSettingsToTeam(teamId: $departmentId, teamRelation: 'department_id');
+```
+
+#### Reset to Defaults
+
+A "Reset to Defaults" button is automatically added to the settings modal footer. You can also call it programmatically:
+
+```php
+$this->resetPageSettingsToDefaults();
+```
+
+#### Default Values
+
+Define sensible defaults that apply before the user ever opens the modal:
+
+```php
+protected function getPageSettingsDefaults(): array
+{
+    return [
+        'show_archived' => false,
+        'default_view' => 'table',
+        'compact_mode' => false,
+    ];
+}
+```
+
+When using `PageSettingDefinition`, defaults are automatically extracted from each definition's `->default()` value.
+
+#### Available Methods
+
+| Method | Description |
+|--------|-------------|
+| `settings(array $inputs)` | Create settings header action (shortcut) |
+| `getPageSettingsAction(?array $schema)` | Create settings action with optional schema override |
+| `getPageSetting(string $key, mixed $default)` | Read a single setting value |
+| `getPageSettingsData()` | Get all settings (merged with defaults) |
+| `savePageSettings(array $data)` | Persist settings to database |
+| `getPageSettingsOrder()` | Get saved item order (for sortable) |
+| `resetPageSettingsToDefaults()` | Delete stored settings, revert to defaults |
+| `saveAsPageSettingsPreset(string $name, bool $isDefault)` | Save current config as a preset |
+| `applyPageSettingsPreset(int $presetId)` | Apply a preset |
+| `deletePageSettingsPreset(int $presetId)` | Delete a preset |
+| `applyPageSettingsToRole(string $role)` | Bulk-apply to role |
+| `applyPageSettingsToTeam(int $teamId, string $teamRelation)` | Bulk-apply to team |
+
+#### Overridable Methods
+
+| Method | Default | Description |
+|--------|---------|-------------|
+| `getPageSettingsFormSchema()` | `[]` | Define settings form fields |
+| `getPageSettingsDefaults()` | Auto from definitions | Default values |
+| `getPageSettingsScope()` | `null` | Scope key for per-context settings |
+| `pageSettingsLivePreview()` | `false` | Enable reactive live preview |
+| `onPageSettingPreviewUpdated($key, $value)` | no-op | Handle live preview changes |
+| `onPageSettingsUpdated(array $data)` | no-op | Hook after save |
 
 ### CanLogsActivity
 

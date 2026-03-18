@@ -3,6 +3,7 @@
     'alt' => null,
     'size' => 'size-8',
     'avatarMethod' => 'getFilamentAvatarUrl',
+    'link' => false,
 ])
 
 @php
@@ -41,9 +42,19 @@
     // get photo url
     $avatarUrl = ($user && method_exists($user, $avatarMethod)) ? $user->$avatarMethod() : null;
     $altText = $user?->name ?? ($alt ?? ($component?->getTooltip() ?? ''));
+
+    // Build profile link URL when link prop is truthy
+    $profileUrl = null;
+    if ($link && $user && isset($user->id)) {
+        $profileUrl = is_string($link) ? $link : url('app/user/' . $user->id);
+    }
 @endphp
 
+@if ($profileUrl)
+<a href="{{ $profileUrl }}" class="flex items-center user-avatar hover:opacity-80 transition-opacity" title="{{ $altText }}">
+@else
 <div class="flex items-center user-avatar">
+@endif
     @if ($avatarUrl)
         <x-filament::avatar :src="$avatarUrl" :alt="$altText" :title="$altText" :size="$size"
             {{ $attributes->merge(['border border-gray-700 shrink-0']) }} />
@@ -54,4 +65,8 @@
             {{ __('N/A') }}
         </div>
     @endif
+@if ($profileUrl)
+</a>
+@else
 </div>
+@endif

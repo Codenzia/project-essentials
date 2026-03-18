@@ -100,39 +100,32 @@ trait IconColoredEnum
     public static function color(string $value, bool $useTailwindColors = true): string
     {
         /**
-         * Full Tailwind color palette
+         * Filament theme color palette for pseudo-random assignment.
          */
         static $availableColors = [
-            'red',
-            'yellow',
-            'green',
-            'blue',
-            'indigo',
-            'purple',
-            'pink',
+            'danger',
+            'success',
+            'warning',
+            'info',
+            'primary',
             'gray',
-            'rose',
-            'lime',
-            'emerald',
-            'cyan',
-            'teal',
-            'fuchsia',
         ];
 
         $map = static::getColors();
         if (isset($map[$value])) {
             $color = $map[$value];
             if ($useTailwindColors) {
-                static $semanticToTailwind = [
+                // Map to Filament theme color names
+                static $semanticToFilament = [
                     'success' => 'success',
-                    'danger' => 'red',
-                    'warning' => 'yellow',
-                    'info' => 'blue',
+                    'danger' => 'danger',
+                    'warning' => 'warning',
+                    'info' => 'info',
+                    'primary' => 'primary',
                     'gray' => 'gray',
                 ];
 
-                // Convert semantic to Tailwind
-                return $semanticToTailwind[$color] ?? $color;
+                return $semanticToFilament[$color] ?? $color;
             }
 
             return $color;

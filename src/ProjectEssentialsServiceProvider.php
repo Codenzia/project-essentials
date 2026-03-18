@@ -135,6 +135,8 @@ class ProjectEssentialsServiceProvider extends PackageServiceProvider
      */
     protected function getMigrations(): array
     {
-        return [];
+        return [
+            'create_page_settings_table',
+        ];
     }
 }

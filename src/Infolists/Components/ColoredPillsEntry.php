@@ -39,6 +39,9 @@ class ColoredPillsEntry extends Entry
     /** Show subtitle in hover card items */
     protected bool $showSubtitleInHover = false;
 
+    /** Center the pills layout */
+    protected bool $centered = false;
+
     /** Get subtitle for hover card items */
     protected ?Closure $itemSubtitleUsing = null;
 
@@ -166,7 +169,14 @@ class ColoredPillsEntry extends Entry
     public function resolveItemColor($item): string
     {
         if ($this->itemColorUsing) {
-            return (string) ($this->itemColorUsing)($item);
+            $color = (string) ($this->itemColorUsing)($item);
+
+            // If it's a short color name (no spaces = not full CSS classes), convert it
+            if (! str_contains($color, ' ')) {
+                return ColoredPillsColumn::tailwindColorToBadgeClasses($color);
+            }
+
+            return $color;
         }
 
         if ($this->enumClass) {
@@ -178,7 +188,7 @@ class ColoredPillsEntry extends Entry
             }
         }
 
-        return 'bg-gray-100 border-gray-300 text-gray-600 dark:bg-gray-500/15 dark:border-gray-400/50 dark:text-gray-400';
+        return ColoredPillsColumn::tailwindColorToBadgeClasses('gray');
     }
 
     public function resolveItemSize($item): string
@@ -238,6 +248,18 @@ class ColoredPillsEntry extends Entry
     public function getShowSubtitleInHover(): bool
     {
         return $this->showSubtitleInHover;
+    }
+
+    public function centered(bool $centered = true): static
+    {
+        $this->centered = $centered;
+
+        return $this;
+    }
+
+    public function isCentered(): bool
+    {
+        return $this->centered;
     }
 
     // ── Enum helpers ────────────────────────────────

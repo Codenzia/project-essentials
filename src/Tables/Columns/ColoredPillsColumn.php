@@ -165,7 +165,14 @@ class ColoredPillsColumn extends Column
     public function resolveItemColor($item): string
     {
         if ($this->itemColorUsing) {
-            return (string) ($this->itemColorUsing)($item);
+            $color = (string) ($this->itemColorUsing)($item);
+
+            // If it's a short color name (no spaces = not full CSS classes), convert it
+            if (! str_contains($color, ' ')) {
+                return static::tailwindColorToBadgeClasses($color);
+            }
+
+            return $color;
         }
 
         if ($this->enumClass) {
@@ -177,7 +184,7 @@ class ColoredPillsColumn extends Column
             }
         }
 
-        return 'bg-gray-100 border-gray-300 text-gray-600 dark:bg-gray-500/15 dark:border-gray-400/50 dark:text-gray-400';
+        return static::tailwindColorToBadgeClasses('gray');
     }
 
     public function resolveItemSize($item): string
@@ -260,23 +267,20 @@ class ColoredPillsColumn extends Column
     }
 
     /**
-     * Convert a Tailwind color name (from IconColoredEnum) to badge CSS classes
-     * with proper light and dark mode support.
+     * Convert a semantic color name (from IconColoredEnum) to badge CSS classes
+     * using Filament's theme color variables for proper light/dark mode support.
+     *
+     * Supported Filament theme colors: danger, success, warning, info, primary, gray.
      */
     public static function tailwindColorToBadgeClasses(string $color): string
     {
         return match ($color) {
-            'danger', 'red' => 'bg-red-100 border-red-300 text-red-700 dark:bg-red-500/15 dark:border-red-400/50 dark:text-red-400',
-            'success', 'green', 'emerald' => 'bg-emerald-100 border-emerald-300 text-emerald-700 dark:bg-green-500/15 dark:border-green-400/50 dark:text-green-400',
-            'warning', 'yellow', 'amber' => 'bg-amber-100 border-amber-300 text-amber-700 dark:bg-amber-500/15 dark:border-amber-400/50 dark:text-amber-400',
-            'info', 'blue' => 'bg-blue-100 border-blue-300 text-blue-700 dark:bg-blue-500/15 dark:border-blue-400/50 dark:text-blue-400',
-            'indigo' => 'bg-indigo-100 border-indigo-300 text-indigo-700 dark:bg-indigo-500/15 dark:border-indigo-400/50 dark:text-indigo-400',
-            'purple' => 'bg-purple-100 border-purple-300 text-purple-700 dark:bg-purple-500/15 dark:border-purple-400/50 dark:text-purple-400',
-            'pink', 'rose' => 'bg-pink-100 border-pink-300 text-pink-700 dark:bg-pink-500/15 dark:border-pink-400/50 dark:text-pink-400',
-            'teal', 'cyan' => 'bg-teal-100 border-teal-300 text-teal-700 dark:bg-teal-500/15 dark:border-teal-400/50 dark:text-teal-400',
-            'lime' => 'bg-lime-100 border-lime-300 text-lime-700 dark:bg-lime-500/15 dark:border-lime-400/50 dark:text-lime-400',
-            'fuchsia' => 'bg-fuchsia-100 border-fuchsia-300 text-fuchsia-700 dark:bg-fuchsia-500/15 dark:border-fuchsia-400/50 dark:text-fuchsia-400',
-            default => 'bg-gray-100 border-gray-300 text-gray-600 dark:bg-gray-500/15 dark:border-gray-400/50 dark:text-gray-400',
+            'danger', 'red', 'rose', 'pink' => 'bg-transparent border-danger-400 text-danger-600 dark:border-danger-400 dark:text-danger-400',
+            'success', 'green', 'emerald' => 'bg-transparent border-success-400 text-success-600 dark:border-success-400 dark:text-success-400',
+            'warning', 'yellow', 'amber', 'orange' => 'bg-transparent border-warning-400 text-warning-600 dark:border-warning-400 dark:text-warning-400',
+            'info', 'blue', 'indigo', 'cyan', 'teal' => 'bg-transparent border-info-400 text-info-600 dark:border-info-400 dark:text-info-400',
+            'primary', 'purple', 'fuchsia', 'lime' => 'bg-transparent border-primary-400 text-primary-600 dark:border-primary-400 dark:text-primary-400',
+            default => 'bg-transparent border-gray-400 text-gray-600 dark:border-gray-400 dark:text-gray-400',
         };
     }
 }

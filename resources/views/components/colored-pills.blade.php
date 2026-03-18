@@ -8,11 +8,12 @@
     $hiddenItems = $items->slice($visibleLimit);
     $hiddenCount = $totalItems - $visibleLimit;
     $showSubtitle = $component->getShowSubtitleInHover();
+    $centered = method_exists($component, 'isCentered') && $component->isCentered();
 @endphp
 
-<div class="text-left break-words whitespace-normal">
+<div class="{{ $centered ? 'text-center' : 'text-left' }} break-words whitespace-normal">
     @if ($totalItems > 0)
-        <div class="flex flex-wrap gap-1.5">
+        <div class="flex flex-wrap {{ $centered ? 'justify-center gap-2' : 'gap-1.5' }}">
             @foreach ($visibleItems as $item)
                 @php
                     $label = $component->resolveItemLabel($item);
