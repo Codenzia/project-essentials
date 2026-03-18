@@ -8,6 +8,7 @@ use Codenzia\ProjectEssentials\Models\PageSetting;
 use Codenzia\ProjectEssentials\Models\PageSettingDefinition;
 use Codenzia\ProjectEssentials\Models\PageSettingPreset;
 use Filament\Actions\Action;
+use Filament\Forms\Components\Component;
 use Filament\Forms\Components\Select;
 use Filament\Notifications\Notification;
 use Filament\Schemas\Components\Actions as SchemaActions;
@@ -117,7 +118,7 @@ trait HasPageSettings
      * Define the default form schema for the settings modal.
      * Override this to provide fluent PageSettingDefinition instances.
      *
-     * @return array<PageSettingDefinition|\Filament\Forms\Components\Component>
+     * @return array<PageSettingDefinition|Component>
      */
     protected function getPageSettingsFormSchema(): array
     {
@@ -366,7 +367,7 @@ trait HasPageSettings
     /**
      * Resolve definitions — accept raw Filament components, PageSettingDefinition[], or mixed.
      *
-     * @return array<PageSettingDefinition|\Filament\Forms\Components\Component>
+     * @return array<PageSettingDefinition|Component>
      */
     private function resolveDefinitions(?array $schema = null): array
     {
@@ -513,7 +514,7 @@ trait HasPageSettings
     /**
      * Build a "Reset to Defaults" footer action for the modal.
      */
-    private function getResetToDefaultsFooterAction(): \Filament\Actions\Action
+    private function getResetToDefaultsFooterAction(): Action
     {
         return Action::make('resetToDefaults')
             ->label(__('Reset to Defaults'))

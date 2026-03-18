@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Codenzia\ProjectEssentials\Models;
 
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
@@ -37,7 +38,7 @@ class PageSettingPreset extends Model
     /**
      * Get all presets for a specific page.
      */
-    public static function getForPage(string $page): \Illuminate\Database\Eloquent\Collection
+    public static function getForPage(string $page): Collection
     {
         return static::query()
             ->where('page', $page)

@@ -5,10 +5,10 @@ declare(strict_types=1);
 namespace Codenzia\ProjectEssentials\Models;
 
 use Filament\Forms\Components\Checkbox;
-use Filament\Schemas\Components\Component;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
+use Filament\Schemas\Components\Component;
 
 /**
  * Fluent builder for defining page settings.
