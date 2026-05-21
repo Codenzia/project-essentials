@@ -1,6 +1,26 @@
-# Project Essentials
+# Project Essentials — UI components, form fields, table columns & helpers for Filament
 
-Essential UI components, form fields, table columns, traits, and helpers for Laravel and Filament v4 projects.
+[![Latest Version](https://img.shields.io/packagist/v/codenzia/project-essentials.svg?style=flat-square)](https://packagist.org/packages/codenzia/project-essentials)
+[![PHP Version](https://img.shields.io/packagist/php-v/codenzia/project-essentials.svg?style=flat-square)](https://packagist.org/packages/codenzia/project-essentials)
+[![Filament](https://img.shields.io/badge/Filament-v4%20%7C%20v5-f59e0b?style=flat-square)](https://filamentphp.com)
+[![License](https://img.shields.io/packagist/l/codenzia/project-essentials.svg?style=flat-square)](LICENSE.md)
+
+**Essential UI components, form fields, table columns, infolist entries, traits, and helpers for [Laravel](https://laravel.com) and [Filament v4 / v5](https://filamentphp.com) projects.** A curated component library distilled from every Codenzia Filament app — the bits we reach for in every project that aren't worth re-implementing each time.
+
+> **Why this exists.** Every Filament CRUD project eventually needs a progress column, a coloured-pill list, an icon picker, an RTL-aware paginator, a tag column with overflow handling, a percentage slider form field. Building these one project at a time is wasted hours; bundling them into a versioned package keeps the API consistent across every app you ship.
+
+> **Try it live:** A working integration is included in the [Codenzia plugins demo](https://github.com/Codenzia/plugins-demo) at `/admin/demo/project-essentials`.
+
+---
+
+## Requirements
+
+| Dependency | Version |
+|---|---|
+| PHP | `^8.3` |
+| Filament | `^4.0 \|\| ^5.0` |
+
+---
 
 ## Features
 
@@ -34,6 +54,11 @@ Essential UI components, form fields, table columns, traits, and helpers for Lar
 - **DatePickerWithHint** — DatePicker with auto format hint from config
 - **DateTimePickerWithHint** — DateTimePicker with auto format hint from config
 - **CounterInput** — Stepper number input with +/- buttons
+- **DateRangePicker** — Date range picker with from/to inputs, clear button, and locale-aware display
+- **CardRepeater** — Card-based repeater with inline/card modes, relationship support, and CRUD actions
+
+**Table Filters**
+- **DateRangeFilter** — Table filter using DateRangePicker with automatic query scoping and indicators
 
 **Helpers**
 - **DateHelper** — Date formatting, duration, and human-readable format hints
@@ -626,6 +651,122 @@ use Codenzia\ProjectEssentials\Forms\Components\DateTimePickerWithHint;
 DateTimePickerWithHint::make('start_at')
     ->label('Start At')
 ```
+
+### DateRangePicker
+
+A date range picker field with From/To inputs, locale-aware display formatting, and a clear button. Matches Filament's native DatePicker styling.
+
+```php
+use Codenzia\ProjectEssentials\Forms\Components\DateRangePicker;
+
+DateRangePicker::make('date_range')
+    ->label('Date Range')
+
+// With custom date format and placeholder
+DateRangePicker::make('period')
+    ->dateFormat('Y-m-d')
+    ->placeholder('Select period')
+```
+
+State structure: `['from' => '2024-01-01', 'to' => '2024-12-31']`
+
+| Method | Description |
+|--------|-------------|
+| `dateFormat(string)` | PHP date format string (default: `config('app.date_format', 'd M, Y')`) |
+| `placeholder(string)` | Placeholder text when no dates selected |
+
+### CardRepeater
+
+A card-based repeater field that displays items as read-only cards with inline editing. Supports two modes: **card mode** (read-only cards with edit-on-click) and **inline mode** (form fields always visible). Full relationship support for HasMany and BelongsToMany.
+
+```php
+use Codenzia\ProjectEssentials\Forms\Components\CardRepeater;
+
+// Card mode with relationship
+CardRepeater::make('milestones')
+    ->relationship()
+    ->gridColumns(1)
+    ->cardSchema(fn (Schema $schema) => $schema->schema([
+        View::make('milestone-card'),
+    ]))
+    ->formSchema([
+        TextInput::make('title')->required(),
+        DatePicker::make('due_date'),
+    ])
+    ->addActionLabel('Add milestone')
+    ->addActionIcon('heroicon-o-plus')
+    ->deletable()
+
+// Inline mode (no cardSchema — fields always visible)
+CardRepeater::make('items')
+    ->formSchema([
+        TextInput::make('name')->required(),
+        TextInput::make('quantity')->numeric(),
+    ])
+    ->gridColumns(1)
+    ->deletable()
+
+// BelongsToMany with grid layout
+CardRepeater::make('members')
+    ->relationship()
+    ->gridColumns(3)
+    ->cardSchema(fn (Schema $schema) => $schema->schema([
+        View::make('member-card'),
+    ]))
+    ->formSchema([
+        Select::make('user_id')->relationship('user', 'name'),
+    ])
+    ->disableOptionsWhenSelectedInSiblingItems('user_id')
+
+// BelongsToMany with custom save logic (pivot data)
+CardRepeater::make('members')
+    ->relationship('members', function ($relationship, $state) {
+        $relationship->sync(collect($state)->mapWithKeys(fn ($item) => [
+            $item['id'] => ['role' => $item['role']],
+        ]));
+    })
+```
+
+| Method | Description |
+|--------|-------------|
+| `formSchema(array\|Closure)` | Form fields for add/edit mode |
+| `cardSchema(Closure)` | Read-only card display (enables card mode) |
+| `cardActions(array\|Closure)` | Custom actions on each card |
+| `showCardActionsOnHover(bool)` | Show card actions only on hover (default: `true`) |
+| `relationship(?string, ?Closure)` | Enable relationship mode with optional custom save |
+| `gridColumns(int\|Closure)` | Number of grid columns (default: `1`) |
+| `emptyMessage(string\|Closure)` | Message when no items (default: `'No items yet'`) |
+| `addActionLabel(string\|Closure)` | Label for the add button (default: `'Add item'`) |
+| `addActionIcon(string\|Closure)` | Icon for the add button |
+| `addActionAlignment(string\|Closure)` | Alignment: `'left'`, `'center'`, `'right'` (default: `'left'`) |
+| `deletable(bool\|Closure)` | Allow deleting items (default: `true`) |
+| `editable(bool\|Closure)` | Allow editing items (default: `true`) |
+| `disableOptionsWhenSelectedInSiblingItems(string)` | Disable selected options in sibling Select fields |
+
+---
+
+## Table Filters
+
+### DateRangeFilter
+
+A table filter that uses DateRangePicker for date range filtering. Automatically builds the query, formats indicators, and supports custom column targeting.
+
+```php
+use Codenzia\ProjectEssentials\Tables\Filters\DateRangeFilter;
+
+// Basic — filters by the column matching the filter name
+DateRangeFilter::make('created_at')
+
+// With custom column and placeholder
+DateRangeFilter::make('date_filter')
+    ->column('published_at')
+    ->placeholder('Published date')
+```
+
+| Method | Description |
+|--------|-------------|
+| `column(string)` | Database column to filter (default: filter name) |
+| `placeholder(string)` | Placeholder text in the picker |
 
 ---
 
