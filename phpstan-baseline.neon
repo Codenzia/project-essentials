@@ -1,0 +1,19 @@
+parameters:
+	ignoreErrors:
+		-
+			message: '#^Call to an undefined method Codenzia\\ProjectEssentials\\Infolists\\Components\\ColoredEnumEntry\:\:sortable\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: src/Infolists/Components/ColoredEnumEntry.php
+
+		-
+			message: '#^Call to an undefined static method Codenzia\\ProjectEssentials\\Models\\PageSetting\:\:updateOrCreate\(\)\.$#'
+			identifier: staticMethod.notFound
+			count: 1
+			path: src/Models/PageSetting.php
+
+		-
+			message: '#^Unsafe usage of new static\(\)\.$#'
+			identifier: new.static
+			count: 4
+			path: src/Models/PageSettingDefinition.php

@@ -2,13 +2,14 @@ includes:
     - phpstan-baseline.neon
 
 parameters:
-    level: 4
+    # Larastan can't be installed here right now: it pins Laravel ≤12, but
+    # orchestra/canvas (via testbench) pulls Laravel 13. Until Larastan ships
+    # Laravel 13 support, we run vanilla phpstan/phpstan at a conservative
+    # level — catches real bugs (undefined symbols, dead code, type errors)
+    # without flooding on Laravel idioms it doesn't model.
+    level: 1
     paths:
         - src
         - config
         - database
     tmpDir: build/phpstan
-    checkOctaneCompatibility: true
-    checkModelProperties: true
-    checkMissingIterableValueType: false
-
