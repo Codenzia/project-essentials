@@ -378,7 +378,15 @@ class CardRepeater extends Field
 
     protected function isViewMode(): bool
     {
-        $livewire = $this->getLivewire();
+        // Component may be inspected standalone (unit tests construct
+        // CardRepeater::make('x') with no parent Schema, so $container is
+        // uninitialized). In that case there's no Livewire context to read
+        // and "view mode" cannot apply — answer false.
+        try {
+            $livewire = $this->getLivewire();
+        } catch (\Error) {
+            return false;
+        }
 
         if (! $livewire instanceof ViewRecord) {
             return false;
