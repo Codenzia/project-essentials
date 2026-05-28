@@ -57,8 +57,8 @@ class LocaleSwitcher extends Component
 
     /**
      * @param  array<string, mixed>|null  $locales  Map of code => meta (string|array). Defaults
-     *                                               to filament-panel-base's active locales, then
-     *                                               config('app.available_locales'), then ['en'].
+     *                                              to filament-panel-base's active locales, then
+     *                                              config('app.available_locales'), then ['en'].
      */
     public function __construct(
         ?array $locales = null,
