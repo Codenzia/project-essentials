@@ -34,6 +34,26 @@ it('allows custom grid columns', function () {
     expect($component->getGridColumns())->toBe(3);
 });
 
+it('has no table header view by default', function () {
+    $component = CardRepeater::make('items');
+
+    expect($component->getTableHeaderView())->toBeNull();
+});
+
+it('allows setting a table header view', function () {
+    $component = CardRepeater::make('items')
+        ->tableHeader('forms.components.goal-card-header');
+
+    expect($component->getTableHeaderView())->toBe('forms.components.goal-card-header');
+});
+
+it('evaluates table header view from a closure', function () {
+    $component = CardRepeater::make('items')
+        ->tableHeader(fn (): string => 'forms.components.dynamic-header');
+
+    expect($component->getTableHeaderView())->toBe('forms.components.dynamic-header');
+});
+
 it('has default empty message', function () {
     $component = CardRepeater::make('items');
 

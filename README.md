@@ -48,6 +48,7 @@
 - **Banner** — Top-of-page notification banner with success/danger/warning styles
 - **GridLayoutSwitcher** — Session-persistent grid size slider
 - **ColumnToggle** — Custom column visibility toggling with session persistence
+- **LocaleSwitcher** — Self-contained language switcher dropdown (works in Filament panels AND public Blade pages; no flag-icons or host-Tailwind dependency)
 
 **Form Components**
 - **IconColoredEnumSelect** — Rich select with colored icons for enums
@@ -725,7 +726,18 @@ CardRepeater::make('members')
             $item['id'] => ['role' => $item['role']],
         ]));
     })
+
+// Table-style layout with a shared header row above all cards
+CardRepeater::make('goals')
+    ->relationship()
+    ->gridColumns(1)
+    ->tableHeader('forms.components.goal-card-header')
+    ->cardSchema(fn (Schema $schema) => $schema->schema([
+        View::make('forms.components.goal-card'),
+    ]))
 ```
+
+**Note on `tableHeader()` vs inline `@if($isFirst)` headers.** It's tempting to put a column header inside the first card's view using `@if($isFirst)`, but that makes the first card taller than the rest and breaks any absolute positioning the wrapper does (notably the hover-only delete button alignment). Use `tableHeader()` instead — the header renders once above the grid and every card wrapper stays the same height.
 
 | Method | Description |
 |--------|-------------|
@@ -735,6 +747,7 @@ CardRepeater::make('members')
 | `showCardActionsOnHover(bool)` | Show card actions only on hover (default: `true`) |
 | `relationship(?string, ?Closure)` | Enable relationship mode with optional custom save |
 | `gridColumns(int\|Closure)` | Number of grid columns (default: `1`) |
+| `tableHeader(string\|Closure)` | Blade view rendered once above the card grid (e.g. a table-style column header row). Keeps all card wrappers uniform in height so positioned controls (like the hover delete button) align consistently |
 | `emptyMessage(string\|Closure)` | Message when no items (default: `'No items yet'`) |
 | `addActionLabel(string\|Closure)` | Label for the add button (default: `'Add item'`) |
 | `addActionIcon(string\|Closure)` | Icon for the add button |
@@ -1300,6 +1313,44 @@ Advanced loading overlay with 4 visual variants, configurable blur, opacity, and
 | `showProgress` | bool | `false` | Indeterminate progress bar |
 | `theme` | string | `'auto'` | `'auto'`, `'light'`, `'dark'` |
 | `delay` | int | `200` | Delay (ms) before showing |
+
+### LocaleSwitcher
+
+A standard language-switcher dropdown that renders identically inside a Filament panel **and** on any public Blade page. It ships its own scoped CSS — no `flag-icons` library and no reliance on the host's Tailwind build (the failure mode that breaks utility-class-based switchers on public sites). It shows a globe glyph + the current code, and lists locales by native name with a checkmark on the active one. Dark mode and RTL are handled automatically.
+
+```blade
+{{-- Zero-config: auto-resolves locales (filament-panel-base → config('app.available_locales') → app locale) --}}
+<x-project-essentials::locale-switcher />
+
+{{-- Explicit locales + alignment --}}
+<x-project-essentials::locale-switcher
+    :locales="['en' => [], 'ar' => []]"
+    align="start"
+/>
+
+{{-- Passing filament-panel-base's active locales --}}
+<x-project-essentials::locale-switcher
+    :locales="\Codenzia\FilamentPanelBase\Middleware\SetLocale::getLocales()"
+/>
+```
+
+Requires a named route to switch locale (default `locale.switch`, receiving the locale code):
+
+```php
+Route::get('/locale/{locale}', function (string $locale) {
+    session()->put('locale', $locale);
+    return back();
+})->name('locale.switch');
+```
+
+| Prop | Type | Default | Description |
+|------|------|---------|-------------|
+| `locales` | array\|null | auto | `['en' => [...], 'ar' => [...]]` or list `['en','ar']`. Entries may carry `native`/`dir`; missing values are filled from a built-in native-name map. |
+| `currentLocale` | string\|null | `app()->getLocale()` | The active locale code. |
+| `switchRoute` | string | `'locale.switch'` | Named route to link each locale to. |
+| `align` | string | `'end'` | Dropdown alignment: `'start'` or `'end'`. |
+
+The dropdown only renders when more than one locale is available. Alpine.js (bundled with Filament/Livewire) powers the open/close.
 
 ### Banner
 

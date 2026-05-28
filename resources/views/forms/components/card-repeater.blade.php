@@ -7,6 +7,7 @@
     $isDeletable = $isDeletable();
     $isEditable = $isEditable();
     $hasRelationship = $hasRelationship();
+    $tableHeaderView = $getTableHeaderView();
 
     $childSchemas = $getDefaultChildSchemas();
 
@@ -33,6 +34,9 @@
     <div class="space-y-3">
         @if (count($rawState))
             @php $cardIndex = 0; $cardTotal = $cardRecords->count(); @endphp
+            @if ($tableHeaderView && $cardTotal > 0)
+                @include($tableHeaderView)
+            @endif
             <div class="grid gap-3" style="grid-template-columns: repeat({{ $gridCols }}, minmax(0, 1fr))">
                 @foreach ($rawState as $itemKey => $itemData)
                     @php
@@ -83,7 +87,14 @@
                         </div>
 
                     @elseif ($showAsCard && $hasCardSchema)
-                        {{-- CARD: saved, confirmed, or raw data item --}}
+                        {{-- CARD: saved, confirmed, or raw data item.
+                             Delete button is anchored INSIDE the wrapper's top-right corner.
+                             Originally it was at `top-1 -right-10` (40px outside the wrapper)
+                             which created a hover gap — the cursor crossed the parent's
+                             boundary on its way to the button, fired `mouseleave`, and the
+                             button vanished mid-reach. Anchoring inside removes the gap.
+                             Card schemas that need horizontal space for the button should
+                             reserve it themselves (e.g. `pr-10` on the row content). --}}
                         <div class="relative @if($isConfirmed && ! $isRawData) opacity-75 border border-dashed dark:border-gray-600 border-gray-300 rounded-xl @endif" x-data="{ hovered: false }" x-on:mouseenter="hovered = true" x-on:mouseleave="hovered = false">
                             @if (($isSaved || $isConfirmed || $isRawData) && $isEditable)
                                 @php $safeKey = str_replace('-', '_', $itemKey); @endphp
@@ -93,7 +104,7 @@
                                 </div>
                             @endif
                             @if ($isDeletable)
-                                <div class="absolute top-1 -right-10 z-20" x-show="hovered" x-on:click.stop>
+                                <div class="absolute top-1 right-1 z-20" x-show="hovered" x-on:click.stop>
                                     {{ $deleteAction(['item' => $itemKey]) }}
                                 </div>
                             @endif

@@ -70,6 +70,8 @@ class CardRepeater extends Field
     // ─── Layout ───────────────────────────────────────────────
     protected int | Closure $gridColumnsCount = 1;
 
+    protected string | Closure | null $tableHeaderView = null;
+
     protected string | Closure | null $emptyMessage = null;
 
     protected string | Closure | null $addLabel = null;
@@ -510,6 +512,29 @@ class CardRepeater extends Field
     public function getGridColumns(): int
     {
         return $this->evaluate($this->gridColumnsCount);
+    }
+
+    /**
+     * Set a Blade view that renders a table-style header row above the cards.
+     * The header is rendered once at the top of the grid (not per-card), so
+     * the first card's wrapper has the same height as the rest — keeping
+     * absolute-positioned controls (e.g. the delete button) aligned uniformly.
+     *
+     * Recommended over the older pattern of rendering an `@if($isFirst)`
+     * header block inside each cardSchema view; that pattern makes the first
+     * card taller than the rest and breaks any uniform positioning the wrapper
+     * tries to do.
+     */
+    public function tableHeader(string | Closure $view): static
+    {
+        $this->tableHeaderView = $view;
+
+        return $this;
+    }
+
+    public function getTableHeaderView(): ?string
+    {
+        return $this->evaluate($this->tableHeaderView);
     }
 
     public function emptyMessage(string | Closure $m): static
