@@ -1,0 +1,20 @@
+<?php
+
+return [
+    /**
+     * The User model class used by the Userstamps trait
+     * for the createdByUser() and updatedByUser() relationships.
+     */
+    'user_model' => 'App\\Models\\User',
+
+    /**
+     * Page Settings configuration.
+     */
+    'page_settings' => [
+        /**
+         * The team/department column on the User model.
+         * Used by applyPageSettingsToTeam() for bulk-applying settings.
+         */
+        'team_column' => 'department_id',
+    ],
+];

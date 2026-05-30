@@ -4,7 +4,6 @@ namespace Codenzia\ProjectEssentials;
 
 use Codenzia\ProjectEssentials\Commands\ProjectEssentialCommand;
 use Filament\Support\Assets\Asset;
-use Filament\Support\Assets\Css;
 use Filament\Support\Assets\Js;
 use Filament\Support\Facades\FilamentAsset;
 use Filament\Support\Facades\FilamentIcon;
@@ -93,8 +92,7 @@ class ProjectEssentialsServiceProvider extends PackageServiceProvider
     protected function getAssets(): array
     {
         return [
-            Css::make('project-essentials-styles', __DIR__ . '/../resources/dist/swiper.css'),
-            Js::make('project-essentials-scripts', __DIR__ . '/../resources/dist/swiper.js'),
+            Js::make('project-essentials-responsive-tabs', __DIR__ . '/../resources/js/responsive-tabs.js'),
         ];
     }
 
@@ -137,6 +135,8 @@ class ProjectEssentialsServiceProvider extends PackageServiceProvider
      */
     protected function getMigrations(): array
     {
-        return [];
+        return [
+            'create_page_settings_table',
+        ];
     }
 }
