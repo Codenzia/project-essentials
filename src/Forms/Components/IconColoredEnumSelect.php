@@ -36,6 +36,23 @@ class IconColoredEnumSelect extends Select
 
     protected bool $isBadge = false;
 
+    protected bool $autoSelectFirst = true;
+
+    /**
+     * Whether a null state should auto-select the first enum case on hydrate.
+     *
+     * Defaults true (handy for required form fields). Set false for nullable
+     * contexts such as table/page filters where null means "all" — otherwise
+     * the filter silently defaults to the first case instead of showing the
+     * placeholder.
+     */
+    public function autoSelectFirst(bool $condition = true): static
+    {
+        $this->autoSelectFirst = $condition;
+
+        return $this;
+    }
+
     /**
      * Optionally accept an enum class at creation.
      */
@@ -145,8 +162,15 @@ class IconColoredEnumSelect extends Select
                 );
             });
 
-        // Default to first enum case if none set
+        // Default to first enum case if none set — unless autoSelectFirst is
+        // disabled (e.g. nullable filters where null means "all"). The flag is
+        // read at hydrate time so ->autoSelectFirst(false) works regardless of
+        // call order relative to ->enumClass().
         $this->afterStateHydrated(function ($component, $state) use ($class) {
+            if (! $this->autoSelectFirst) {
+                return;
+            }
+
             if ($state === null) {
                 $first = $class::cases()[0] ?? null;
                 if ($first) {
