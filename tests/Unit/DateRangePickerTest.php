@@ -113,6 +113,16 @@ it('forColumns accepts an optional label', function () {
     expect($result[1]->getLabel())->toBe('Project Duration');
 });
 
+it('forColumns marks both fields required when required is true', function () {
+    $result = DateRangePicker::forColumns('start_date', 'end_date', required: true);
+
+    $isRequired = (fn () => $this->isRequired)->call($result[1]);
+    expect($isRequired)->toBeTrue();
+
+    $hiddenRequired = (fn () => $this->isRequired)->call($result[0]);
+    expect($hiddenRequired)->toBeTrue();
+});
+
 it('forColumns without explicit label auto-generates one from the field name', function () {
     $result = DateRangePicker::forColumns('start_date', 'end_date');
 

@@ -106,7 +106,10 @@ class DateRangePicker extends Field
         string $fromColumn,
         string $toColumn,
         ?string $label = null,
+        bool $required = false,
     ): array {
+        $hidden = Hidden::make($toColumn);
+
         $picker = static::make($fromColumn)
             ->fromColumn($fromColumn)
             ->toColumn($toColumn);
@@ -115,10 +118,12 @@ class DateRangePicker extends Field
             $picker->label($label);
         }
 
-        return [
-            Hidden::make($toColumn),
-            $picker,
-        ];
+        if ($required) {
+            $picker->required();
+            $hidden->required();
+        }
+
+        return [$hidden, $picker];
     }
 
     public function dateFormat(string $format): static
