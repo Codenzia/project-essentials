@@ -676,6 +676,35 @@ State structure: `['from' => '2024-01-01', 'to' => '2024-12-31']`
 | `dateFormat(string)` | PHP date format string (default: `config('app.date_format', 'd M, Y')`) |
 | `placeholder(string)` | Placeholder text when no dates selected |
 
+#### Split-column mode
+
+When the model stores the range as two separate columns (e.g. `start_date` / `end_date`), use `forColumns()` to avoid manual hydration/dehydration boilerplate:
+
+```php
+// Spread into your schema — returns [Hidden::make('end_date'), DateRangePicker::make('start_date')]
+->components([
+    ...DateRangePicker::forColumns('start_date', 'end_date', label: 'Duration'),
+    // ... other fields
+])
+```
+
+The component:
+- Hydrates `['from', 'to']` state from both model attributes (Carbon instances are normalised to `Y-m-d`)
+- Dehydrates the `from` date back to `start_date` (the picker's own key)
+- Syncs the `to` date to `end_date` via the companion `Hidden` field on every state change
+
+You can also configure manually if you need a custom label or additional modifiers:
+
+```php
+Hidden::make('end_date'),
+DateRangePicker::make('start_date')
+    ->fromColumn('start_date')
+    ->toColumn('end_date')
+    ->label('Duration'),
+```
+
+> **Note:** `fromColumn()` automatically enables `->live()` so the Hidden field stays in sync on every picker interaction.
+
 ### CardRepeater
 
 A card-based repeater field that displays items as read-only cards with inline editing. Supports two modes: **card mode** (read-only cards with edit-on-click) and **inline mode** (form fields always visible). Full relationship support for HasMany and BelongsToMany.
