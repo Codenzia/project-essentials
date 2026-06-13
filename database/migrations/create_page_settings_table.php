@@ -12,7 +12,7 @@ return new class extends Migration
             $table->id();
             $table->foreignId('user_id')->constrained()->cascadeOnDelete();
             $table->string('page');
-            $table->string('scope')->nullable();
+            $table->string('scope')->default('');
             $table->json('settings')->default('{}');
             $table->json('order')->nullable();
             $table->timestamps();

@@ -13,49 +13,40 @@ use Illuminate\Support\Collection;
 class FilamentTableHelper
 {
     /**
-     * @var array|null A cached array of the common stamp column definitions.
-     */
-    private static ?array $cachedStampDefinitions = null;
-
-    /**
-     * Returns a static, cached array of common timestamp and userstamp column definitions.
-     * This method ensures the columns are defined only once.
+     * Returns a fresh array of common timestamp and userstamp column definitions.
+     * Fresh instances are built per call so column state never leaks between tables.
      */
     private static function getStaticStampDefinitions(): array
     {
-        if (self::$cachedStampDefinitions === null) {
-            self::$cachedStampDefinitions = [
-                TextColumn::make('created_at')
-                    ->dateTime()
-                    ->date(config('app.date_format'))
-                    ->sortable()
-                    ->size(TextSize::ExtraSmall)
-                    ->toggleable(isToggledHiddenByDefault: true)
-                    ->label('Created At'),
+        return [
+            TextColumn::make('created_at')
+                ->dateTime()
+                ->date(config('app.date_format'))
+                ->sortable()
+                ->size(TextSize::ExtraSmall)
+                ->toggleable(isToggledHiddenByDefault: true)
+                ->label('Created At'),
 
-                TextColumn::make('updated_at')
-                    ->dateTime()
-                    ->date(config('app.date_format'))
-                    ->size(TextSize::ExtraSmall)
-                    ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: true)
-                    ->label('Updated At'),
+            TextColumn::make('updated_at')
+                ->dateTime()
+                ->date(config('app.date_format'))
+                ->size(TextSize::ExtraSmall)
+                ->sortable()
+                ->toggleable(isToggledHiddenByDefault: true)
+                ->label('Updated At'),
 
-                TextColumn::make('createdByUser.name')
-                    ->label('Created By')
-                    ->size(TextSize::ExtraSmall)
-                    ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: true),
+            TextColumn::make('createdByUser.name')
+                ->label('Created By')
+                ->size(TextSize::ExtraSmall)
+                ->sortable()
+                ->toggleable(isToggledHiddenByDefault: true),
 
-                TextColumn::make('updatedByUser.name')
-                    ->label('Updated By')
-                    ->size(TextSize::ExtraSmall)
-                    ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: true),
-            ];
-        }
-
-        return self::$cachedStampDefinitions;
+            TextColumn::make('updatedByUser.name')
+                ->label('Updated By')
+                ->size(TextSize::ExtraSmall)
+                ->sortable()
+                ->toggleable(isToggledHiddenByDefault: true),
+        ];
     }
 
     /* Function to add time and user stamp columns to any filament table */
@@ -126,7 +117,11 @@ class FilamentTableHelper
                         return $query
                             ->when(
                                 $data[$column],
-                                fn (Builder $query, $value): Builder => $query->where($column, 'like', "%{$value}%"),
+                                function (Builder $query, $value) use ($column): Builder {
+                                    $escaped = addcslashes($value, '%_\\');
+
+                                    return $query->where($column, 'like', "%{$escaped}%");
+                                },
                             );
                     }),
             ]

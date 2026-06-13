@@ -37,6 +37,8 @@ class PageSetting extends Model
      */
     public static function getForUser(int $userId, string $page, ?string $scope = null): ?static
     {
+        $scope = $scope ?? '';
+
         return static::query()
             ->where('user_id', $userId)
             ->where('page', $page)
@@ -49,16 +51,24 @@ class PageSetting extends Model
      */
     public static function persist(int $userId, string $page, array $settings, ?array $order = null, ?string $scope = null): static
     {
-        return static::updateOrCreate(
-            [
-                'user_id' => $userId,
-                'page' => $page,
-                'scope' => $scope,
-            ],
-            [
-                'settings' => $settings,
-                'order' => $order,
-            ]
-        );
+        $scope = $scope ?? '';
+
+        $keys = [
+            'user_id' => $userId,
+            'page' => $page,
+            'scope' => $scope,
+        ];
+
+        $values = [
+            'settings' => $settings,
+            'order' => $order,
+        ];
+
+        try {
+            return static::updateOrCreate($keys, $values);
+        } catch (\Illuminate\Database\UniqueConstraintViolationException) {
+            // Loser of a concurrent insert race retries as an update.
+            return static::updateOrCreate($keys, $values);
+        }
     }
 }

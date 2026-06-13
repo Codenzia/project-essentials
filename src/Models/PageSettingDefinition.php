@@ -160,6 +160,7 @@ class PageSettingDefinition
             'checkbox' => Checkbox::make($this->key)->default($this->default),
             'select' => Select::make($this->key)->options($this->options)->default($this->default),
             'text' => TextInput::make($this->key)->default($this->default),
+            default => TextInput::make($this->key)->default($this->default),
         };
 
         $component->label(__($this->getLabel()));

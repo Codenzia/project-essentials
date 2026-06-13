@@ -70,7 +70,12 @@ class DateRangeHelper
             return ['start_date' => null, 'end_date' => null];
         }
 
-        $dates = explode($separator, $dateRange);
+        $dates = preg_split('/\s+' . preg_quote($separator, '/') . '\s+/', trim($dateRange));
+        if (count($dates) === 1 && substr_count($dateRange, $separator) === 1) {
+            // unpadded separator and unambiguous — fall back to plain explode
+            $dates = explode($separator, $dateRange);
+        }
+
         $start_date = $dates[0];
         $end_date = null;
         if (count($dates) !== 2 && ! $endDateOptional) {
@@ -121,7 +126,12 @@ class DateRangeHelper
             return ['start_date' => null, 'end_date' => null];
         }
 
-        $dates = explode($separator, $dateRange);
+        $dates = preg_split('/\s+' . preg_quote($separator, '/') . '\s+/', trim($dateRange));
+        if (count($dates) === 1 && substr_count($dateRange, $separator) === 1) {
+            // unpadded separator and unambiguous — fall back to plain explode
+            $dates = explode($separator, $dateRange);
+        }
+
         $start_date = $dates[0];
         if (count($dates) === 2) {
             $end_date = $dates[1];

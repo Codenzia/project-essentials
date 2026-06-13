@@ -42,7 +42,7 @@ class DateHelper
         $endDate = Carbon::parse($end_date);
         $now = now();
 
-        $totalDays = number_format($startDate->diffInDays($endDate), 0);
+        $totalDays = number_format($startDate->diffInDays($endDate, true), 0);
 
         if ($now->greaterThan($startDate) && $now->lessThan($endDate)) {
             $daysLeft = number_format($now->diffInDays($endDate), 0);

@@ -94,7 +94,7 @@ class IconColoredEnumSelect extends Select
             throw new InvalidArgumentException("{$class} must be a valid enum.");
         }
 
-        if (! in_array(IconColoredEnum::class, class_uses($class), true)) {
+        if (! in_array(IconColoredEnum::class, class_uses_recursive($class), true)) {
             throw new InvalidArgumentException("{$class} must use the " . IconColoredEnum::class . ' trait.');
         }
 

@@ -46,7 +46,7 @@
     // Build profile link URL when link prop is truthy
     $profileUrl = null;
     if ($link && $user && isset($user->id)) {
-        $profileUrl = is_string($link) ? $link : url('app/user/' . $user->id);
+        $profileUrl = is_string($link) ? $link : null;
     }
 @endphp
 
@@ -57,7 +57,7 @@
 @endif
     @if ($avatarUrl)
         <x-filament::avatar :src="$avatarUrl" :alt="$altText" :title="$altText" :size="$size"
-            {{ $attributes->merge(['border border-gray-700 shrink-0']) }} />
+            {{ $attributes->merge(['class' => 'border border-gray-700 shrink-0']) }} />
     @else
         {{-- Centered fallback for missing users --}}
         <div alt="{{ $altText }}" title="{{ $altText }}"

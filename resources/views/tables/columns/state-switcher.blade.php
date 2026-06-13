@@ -8,7 +8,7 @@
 
 <div class="flex items-center justify-center">
     <div
-        wire:key="{{ $this->getId() }}.table.record.{! $recordKey !}.column.{{ $getName() }}.toggle-column.{{ $state ? 'true' : 'false' }}">
+        wire:key="{{ $this->getId() }}.table.record.{{ $recordKey }}.column.{{ $getName() }}.toggle-column.{{ $state ? 'true' : 'false' }}">
         <div x-data="{
             state: @js($isOn),
             isLoading: false,

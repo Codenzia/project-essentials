@@ -10,7 +10,7 @@ trait HasColoredEnumViewComponent
 {
     protected ?string $enumClass = null;
 
-    protected ?string $defaultText = null; // Store our fallback string
+    protected string | \Closure | null $defaultText = null; // Store our fallback string
 
     /**
      * Set the fallback string if the value is not in the Enum.
@@ -31,7 +31,7 @@ trait HasColoredEnumViewComponent
             throw new InvalidArgumentException("{$enumClass} must be a PHP enum.");
         }
 
-        if (! in_array(IconColoredEnum::class, class_uses($enumClass))) {
+        if (! in_array(IconColoredEnum::class, class_uses_recursive($enumClass))) {
             throw new InvalidArgumentException("{$enumClass} must use IconColoredEnum trait.");
         }
 
@@ -41,10 +41,10 @@ trait HasColoredEnumViewComponent
 
         $this->formatStateUsing(function ($state) use ($showText): ?string {
             if ($state instanceof UnitEnum) {
-                return $showText ? $state?->getLabel() : '&nbsp;';
+                return $showText ? $state?->getLabel() : null;
             }
 
-            return $this->defaultText ?? $state;
+            return $this->evaluate($this->defaultText) ?? $state;
         });
 
         // Automatically set color, defaulting to 'gray' if state isn't an enum

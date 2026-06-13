@@ -11,8 +11,10 @@ trait HasCreatedUpdatedViewComponent
     // Maximum characters for usernames
     public int $limit = 20;
 
-    public function setup(): void
+    protected function setUp(): void
     {
+        parent::setUp();
+
         // Set default label
         $this->label(__('Created & Updated'));
     }

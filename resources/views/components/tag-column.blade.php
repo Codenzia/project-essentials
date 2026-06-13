@@ -72,12 +72,12 @@
         @if ($totalTags > 0)
             @foreach ($tags->take($contextLimit) as $tag)
                 @php
-                    $tagColor = $useRandomColors
-                        ? $colorClasses[array_rand($colorClasses)]
-                        : 'bg-gradient-to-r from-primary-900/70 to-primary-500/70 text-white';
-
                     // Handle both object and array tag structures
                     $tagName = is_object($tag) ? $tag->name : $tag['name'] ?? $tag;
+
+                    $tagColor = $useRandomColors
+                        ? $colorClasses[crc32((string) $tagName) % count($colorClasses)]
+                        : 'bg-gradient-to-r from-primary-900/70 to-primary-500/70 text-white';
                 @endphp
 
                 <h6 class="inline-flex items-center px-3 py-1 text-xs border rounded-full {{ $tagColor }}"

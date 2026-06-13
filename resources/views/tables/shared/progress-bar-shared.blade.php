@@ -1,5 +1,6 @@
 @php
     $progress = isset($getState) ? $getState() : $state;
+    $progress = max(0, min(100, (float) ($progress ?? 0)));
     $component = $column ?? $entry;
     $label = $component->getProgressLabel();
     $align = $component->getAlignValue();

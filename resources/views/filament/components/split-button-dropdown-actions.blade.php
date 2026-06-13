@@ -1,8 +1,7 @@
 @php
     $allActions = $group->getActions();
-    $mainAction = $allActions[0];
+    $mainAction = $allActions[0] ?? null;
     $dropdownActions = $allActions;
-    $anyActionsMounted = count($this->mountedTableActions ?? $this->mountedActions) > 0;
 @endphp
 <div class='flex items-stretch h-[39px]! overflow-hidden spilt-button '>
     {{-- The Main Action Button on the left --}}
