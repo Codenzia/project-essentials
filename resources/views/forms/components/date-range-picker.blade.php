@@ -44,7 +44,7 @@
                 <button type="button" x-on:click="open = !open" class="fi-fo-date-time-picker-trigger">
                     <input
                         readonly
-                        :placeholder="'{{ $placeholder }}'"
+                        placeholder="{{ $placeholder }}"
                         :value="displayValue"
                         class="fi-fo-date-time-picker-display-text-input"
                     />

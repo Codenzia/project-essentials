@@ -275,7 +275,8 @@ trait CanToggleColumns
     {
         $sessionKey = $this->getTableToggleStateFromSessionKey();
         session()->forget($sessionKey);
-        $this->cachedFilteredColumns = null;
+        $this->filteredCache = [];
+        $this->columnToggleState = [];
         $this->dispatch('updateColumns');
     }
 

@@ -2,7 +2,6 @@
 
 namespace Codenzia\ProjectEssentials;
 
-use Codenzia\ProjectEssentials\Commands\ProjectEssentialCommand;
 use Filament\Support\Assets\Asset;
 use Filament\Support\Assets\Js;
 use Filament\Support\Facades\FilamentAsset;
@@ -49,13 +48,6 @@ class ProjectEssentialsServiceProvider extends PackageServiceProvider
         }
     }
 
-    // public function boot(): void
-    // {
-    //     dd('here');
-    //     // Ensure the real path to views is registered with the namespace
-
-    // }
-
     public function packageRegistered(): void {}
 
     public function packageBooted(): void
@@ -101,9 +93,7 @@ class ProjectEssentialsServiceProvider extends PackageServiceProvider
      */
     protected function getCommands(): array
     {
-        return [
-            ProjectEssentialCommand::class,
-        ];
+        return [];
     }
 
     /**

@@ -1,7 +1,6 @@
 @php
-    $record = $getRecord();
-    $state = $record->real_progress ?? 0;
-    $offset = (100 - $state) * 1.38;
+    $state = (float) ($getState() ?? 0);
+    $offset = (100 - max(0, min(100, $state))) * 1.38;
 @endphp
 <div class="relative flex items-center justify-center">
     <svg class="w-32 h-32" x-cloak aria-hidden="true" viewBox="0 0 88 88">
@@ -16,7 +15,7 @@
             cx="44" cy="44" r="22" transform="rotate(-90 44 44)" />
         @if ($state > 0)
             <circle class="stroke-linecap-round" stroke-width="5" stroke="url(#progress-gradient)"
-                :stroke-dasharray="138" :stroke-dashoffset="{{ $offset }}" fill="transparent" cx="44"
+                stroke-dasharray="138" stroke-dashoffset="{{ $offset }}" fill="transparent" cx="44"
                 cy="44" r="22" transform="rotate(-90 44 44)" />
         @endif
     </svg>

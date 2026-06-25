@@ -1,11 +1,12 @@
+# Please see the documentation for all configuration options:
+# https://help.github.com/github/administering-a-repository/configuration-options-for-dependency-updates
+
 version: 2
+updates:
 
-# Dependabot intentionally disabled on this public Packagist mirror.
-# This repo is a read-only mirror of the private project-essentials-dev
-# repo (where version updates are managed). Keeping Dependabot active on
-# both ends produces duplicate PRs that go nowhere.
-#
-# To re-enable, move the update rules from the private -dev repo here, or
-# add ecosystem entries below.
-
-updates: []
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    labels:
+      - "dependencies"

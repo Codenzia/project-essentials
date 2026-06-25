@@ -62,6 +62,17 @@ trait HasPageSettings
     }
 
     /**
+     * Authorize admin-level page-settings operations (presets, bulk apply).
+     * Override in your page to grant access; denied by default.
+     *
+     * Example: return auth()->user()->can('manage page settings');
+     */
+    protected function canManagePageSettingsPresets(): bool
+    {
+        return false;
+    }
+
+    /**
      * Whether to enable live preview (reactive updates without submit).
      * Override to return true for instant feedback.
      */
@@ -227,7 +238,7 @@ trait HasPageSettings
         PageSetting::query()
             ->where('user_id', Auth::id())
             ->where('page', $this->normalizePageKey())
-            ->where('scope', $this->getPageSettingsScope())
+            ->where('scope', $this->getPageSettingsScope() ?? '')
             ->delete();
 
         $this->resolvedPageSettings = null;
@@ -248,7 +259,10 @@ trait HasPageSettings
      */
     public function applyPageSettingsPreset(int $presetId): void
     {
-        $preset = PageSettingPreset::find($presetId);
+        $preset = PageSettingPreset::query()
+            ->whereKey($presetId)
+            ->where('page', $this->normalizePageKey())
+            ->first();
         if (! $preset) {
             return;
         }
@@ -266,6 +280,8 @@ trait HasPageSettings
      */
     public function saveAsPageSettingsPreset(string $name, bool $isDefault = false): void
     {
+        abort_unless($this->canManagePageSettingsPresets(), 403);
+
         if ($isDefault) {
             // Remove existing default for this page
             PageSettingPreset::query()
@@ -294,6 +310,8 @@ trait HasPageSettings
      */
     public function deletePageSettingsPreset(int $presetId): void
     {
+        abort_unless($this->canManagePageSettingsPresets(), 403);
+
         PageSettingPreset::query()
             ->where('id', $presetId)
             ->where('page', $this->normalizePageKey())
@@ -310,7 +328,16 @@ trait HasPageSettings
      */
     public function applyPageSettingsToRole(string $role): void
     {
+        abort_unless($this->canManagePageSettingsPresets(), 403);
+
         $userModel = config('project-essentials.user_model', 'App\\Models\\User');
+
+        if (! method_exists($userModel, 'scopeRole')) {
+            throw new \BadMethodCallException(
+                "applyPageSettingsToRole() requires the spatie/laravel-permission role scope on [{$userModel}]."
+            );
+        }
+
         $users = $userModel::role($role)->pluck('id');
         $settings = $this->getPageSettingsData();
         $order = $this->getPageSettingsOrder();
@@ -333,8 +360,12 @@ trait HasPageSettings
     /**
      * Apply settings to all users in a department/team (admin bulk-apply).
      */
-    public function applyPageSettingsToTeam(int $teamId, string $teamRelation = 'department_id'): void
+    public function applyPageSettingsToTeam(int $teamId, ?string $teamRelation = null): void
     {
+        abort_unless($this->canManagePageSettingsPresets(), 403);
+
+        $teamRelation ??= config('project-essentials.page_settings.team_column', 'department_id');
+
         $userModel = config('project-essentials.user_model', 'App\\Models\\User');
         $users = $userModel::where($teamRelation, $teamId)->pluck('id');
         $settings = $this->getPageSettingsData();

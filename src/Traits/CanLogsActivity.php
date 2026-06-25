@@ -20,13 +20,13 @@ trait CanLogsActivity
         });
 
         static::updated(function ($model) {
-            if (! static::$skipLogging && $model->isDirty()) {
+            if (! static::$skipLogging && ! app()->runningInConsole() && $model->isDirty()) {
                 $model->logActivity('updated');
             }
         });
 
         static::deleted(function ($model) {
-            if (! static::$skipLogging) {
+            if (! static::$skipLogging && ! app()->runningInConsole()) {
                 $model->logActivity('deleted');
             }
         });
@@ -37,6 +37,13 @@ trait CanLogsActivity
         $model = $this;
         $isCreating = $description === 'created';
         $modelName = class_basename($model);
+
+        // Build the list of sensitive keys to redact before persisting to the log.
+        $sensitive = array_merge(
+            $model->getHidden(),
+            ['password', 'remember_token', 'two_factor_secret', 'two_factor_recovery_codes', 'api_token'],
+            property_exists($model, 'activityLogExcept') ? (array) $model->activityLogExcept : []
+        );
 
         // Get actor name
         $actor = Auth::user();
@@ -72,6 +79,10 @@ trait CanLogsActivity
                     $attributeDiffs[$key] = ['old' => $oldVal, 'new' => $newVal];
                 }
             }
+
+            // Redact sensitive values so a password change logs *that* it changed,
+            // not the hash values themselves.
+            $attributeDiffs = array_diff_key($attributeDiffs, array_flip($sensitive));
         }
 
         // Build description text
@@ -115,7 +126,6 @@ trait CanLogsActivity
                 elseif (strpos($lowerKey, '_id') !== false && $lowerKey !== $model->getKeyName()) {
                     $relationName = str_replace('_id', '', $key);
                     $friendlyFieldName = $this->getFriendlyFieldName($relationName);
-                    $displayValue = $this->getRelatedModelName($relationName, $newVal);
                     $fragments[] = $friendlyFieldName;
                 } elseif (strpos($lowerKey, 'date') !== false) {
                     $fragments[] = $this->getFriendlyFieldName($key);
@@ -138,18 +148,21 @@ trait CanLogsActivity
             }
         }
 
+        // Redact sensitive attributes before persisting the raw data dumps.
+        $safeData = array_diff_key($currentData, array_flip($sensitive));
+
         // Prepare data for logging
         $dataForLogging = [
-            'attributes' => $isCreating ? $currentData : $attributeDiffs,
+            'attributes' => $isCreating ? $safeData : $attributeDiffs,
             'description' => $description,
         ];
 
         try {
             DB::table('activity_logs')->insert([
-                'user_id' => Auth::id() ?? 1,
+                'user_id' => Auth::id(),
                 'model_id' => $model->getKey(),
                 'model' => static::class,
-                'current_data' => json_encode($currentData),
+                'current_data' => json_encode($safeData),
                 'new_data' => json_encode($dataForLogging),
                 'description' => $descriptionText,
                 'created_at' => now(),

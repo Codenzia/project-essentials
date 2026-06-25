@@ -8,8 +8,6 @@ class StateSwitcher extends ToggleColumn
 {
     protected string $view = 'project-essentials::tables.columns.state-switcher';
 
-    public $isActive = false;
-
     protected mixed $onState = 'Active';
 
     protected mixed $offState = 'Inactive';
@@ -96,7 +94,7 @@ class StateSwitcher extends ToggleColumn
                 return $value === $onState;
             }
 
-            return strtoupper((string) $value) === strtoupper($onState->value);
+            return strtoupper((string) $value) === strtoupper((string) $onState->value);
         }
 
         // Handle string comparison
@@ -105,16 +103,5 @@ class StateSwitcher extends ToggleColumn
         }
 
         return $value == $onState;
-    }
-
-    // Method to toggle the state
-    public function Active(): bool
-    {
-        return $this->isActive;
-    }
-
-    public function toggle(): void
-    {
-        $this->isActive = ! $this->isActive;
     }
 }

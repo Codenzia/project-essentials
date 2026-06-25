@@ -78,7 +78,7 @@ class CardRepeater extends Field
 
     protected string | Closure | null $addIcon = null;
 
-    protected string | Closure | null $addAlignment = null;
+    protected \Filament\Support\Enums\Alignment | string | Closure | null $addAlignment = null;
 
     // ─── Deletable / Editable ───────────────────────────────────
     protected bool | Closure $isDeletable = true;
@@ -573,7 +573,7 @@ class CardRepeater extends Field
         return $this->evaluate($this->addIcon);
     }
 
-    public function addActionAlignment(string | Closure $a): static
+    public function addActionAlignment(\Filament\Support\Enums\Alignment | string | Closure | null $a): static
     {
         $this->addAlignment = $a;
 
@@ -582,7 +582,13 @@ class CardRepeater extends Field
 
     public function getAddActionAlignment(): string
     {
-        return $this->evaluate($this->addAlignment) ?? 'left';
+        $alignment = $this->evaluate($this->addAlignment);
+
+        if ($alignment instanceof \Filament\Support\Enums\Alignment) {
+            return $alignment->value;
+        }
+
+        return $alignment ?? 'left';
     }
 
     public function deletable(bool | Closure $c = true): static

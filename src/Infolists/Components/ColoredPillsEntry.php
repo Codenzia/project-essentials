@@ -129,7 +129,7 @@ class ColoredPillsEntry extends Entry
             throw new \InvalidArgumentException("{$enumClass} must be a PHP enum.");
         }
 
-        if (! in_array(IconColoredEnum::class, class_uses($enumClass))) {
+        if (! in_array(IconColoredEnum::class, class_uses_recursive($enumClass))) {
             throw new \InvalidArgumentException("{$enumClass} must use the IconColoredEnum trait.");
         }
 
