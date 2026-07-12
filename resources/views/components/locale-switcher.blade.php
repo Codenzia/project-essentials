@@ -9,19 +9,19 @@
         .pe-ls__trigger {
             display: inline-flex; align-items: center; gap: 0.375rem;
             height: 2.25rem; padding: 0 0.625rem;
-            border: 1px solid rgb(226 232 240); border-radius: 0.5rem;
-            background: transparent; color: rgb(71 85 105); cursor: pointer;
+            border: 1px solid var(--gray-200, rgb(226 232 240)); border-radius: 0.5rem;
+            background: transparent; color: var(--gray-600, rgb(71 85 105)); cursor: pointer;
             font-size: 0.8125rem; font-weight: 600; line-height: 1;
             transition: background-color .15s ease, border-color .15s ease, color .15s ease;
         }
-        .pe-ls__trigger:hover { background: rgb(241 245 249); color: rgb(15 23 42); }
+        .pe-ls__trigger:hover { background: var(--gray-100, rgb(241 245 249)); color: var(--gray-900, rgb(15 23 42)); }
         .pe-ls__globe { width: 1rem; height: 1rem; opacity: .8; }
         .pe-ls__chevron { width: .85rem; height: .85rem; opacity: .6; transition: transform .15s ease; }
         .pe-ls[data-open="true"] .pe-ls__chevron { transform: rotate(180deg); }
         .pe-ls__menu {
             position: absolute; top: calc(100% + 0.5rem); z-index: 50;
             min-width: 11rem; padding: 0.375rem;
-            background: #fff; border: 1px solid rgb(226 232 240);
+            background: var(--white, #fff); border: 1px solid var(--gray-200, rgb(226 232 240));
             border-radius: 0.75rem; box-shadow: 0 10px 30px rgba(2, 6, 23, 0.12);
         }
         .pe-ls__menu--end { inset-inline-end: 0; }
@@ -29,24 +29,24 @@
         .pe-ls__item {
             display: flex; align-items: center; gap: 0.5rem;
             width: 100%; padding: 0.5rem 0.625rem; border-radius: 0.5rem;
-            font-size: 0.875rem; color: rgb(51 65 85); text-decoration: none;
+            font-size: 0.875rem; color: var(--gray-700, rgb(51 65 85)); text-decoration: none;
             transition: background-color .12s ease;
         }
-        .pe-ls__item:hover { background: rgb(241 245 249); }
-        .pe-ls__item[aria-current="true"] { color: rgb(5 150 105); font-weight: 600; }
+        .pe-ls__item:hover { background: var(--gray-100, rgb(241 245 249)); }
+        .pe-ls__item[aria-current="true"] { color: var(--primary-600, rgb(5 150 105)); font-weight: 600; }
         .pe-ls__check { width: 1rem; height: 1rem; flex: none; }
         .pe-ls__check--hidden { visibility: hidden; }
         .pe-ls__native { flex: 1; }
-        .pe-ls__code { font-size: 0.6875rem; letter-spacing: .04em; color: rgb(148 163 184); text-transform: uppercase; }
+        .pe-ls__code { font-size: 0.6875rem; letter-spacing: .04em; color: var(--gray-400, rgb(148 163 184)); text-transform: uppercase; }
 
         /* Dark mode (host toggles .dark on <html>). */
-        .dark .pe-ls__trigger { border-color: rgb(51 65 85); color: rgb(203 213 225); }
-        .dark .pe-ls__trigger:hover { background: rgb(30 41 59); color: rgb(241 245 249); }
-        .dark .pe-ls__menu { background: rgb(15 23 42); border-color: rgb(51 65 85); box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
-        .dark .pe-ls__item { color: rgb(203 213 225); }
-        .dark .pe-ls__item:hover { background: rgb(30 41 59); }
-        .dark .pe-ls__item[aria-current="true"] { color: rgb(52 211 153); }
-        .dark .pe-ls__code { color: rgb(100 116 139); }
+        .dark .pe-ls__trigger { border-color: var(--gray-700, rgb(51 65 85)); color: var(--gray-300, rgb(203 213 225)); }
+        .dark .pe-ls__trigger:hover { background: var(--gray-800, rgb(30 41 59)); color: var(--gray-100, rgb(241 245 249)); }
+        .dark .pe-ls__menu { background: var(--gray-900, rgb(15 23 42)); border-color: var(--gray-700, rgb(51 65 85)); box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+        .dark .pe-ls__item { color: var(--gray-300, rgb(203 213 225)); }
+        .dark .pe-ls__item:hover { background: var(--gray-800, rgb(30 41 59)); }
+        .dark .pe-ls__item[aria-current="true"] { color: var(--primary-400, rgb(52 211 153)); }
+        .dark .pe-ls__code { color: var(--gray-500, rgb(100 116 139)); }
     </style>
 @endonce
 

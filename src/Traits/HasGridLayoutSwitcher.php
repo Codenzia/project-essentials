@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Codenzia\ProjectEssentials\Traits;
 
 use Filament\Actions\Action;
@@ -77,6 +79,6 @@ trait HasGridLayoutSwitcher
             ->label(__('Grid'))
             ->icon('heroicon-o-view-columns')
             ->view('project-essentials::components.grid-layout-switcher', ['gridSize' => $this->getDynamicGridSize()])
-            ->extraAttributes(['class' => 'fi-ta-header-action-item grid-icon-button text-white mx-1']);
+            ->extraAttributes(['class' => 'fi-ta-header-action-item grid-icon-button mx-1']);
     }
 }

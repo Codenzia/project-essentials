@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Codenzia\ProjectEssentials;
 
 use Filament\Support\Assets\Asset;
@@ -127,6 +129,7 @@ class ProjectEssentialsServiceProvider extends PackageServiceProvider
     {
         return [
             'create_page_settings_table',
+            'create_activity_logs_table',
         ];
     }
 }

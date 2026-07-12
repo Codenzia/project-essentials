@@ -217,9 +217,9 @@
     .loading-spinner__dot:nth-child(2) { animation-delay: 0.2s; }
     .loading-spinner__dot:nth-child(3) { animation-delay: 0.4s; }
     .loading-spinner--light { background-color: rgba(255, 255, 255, var(--spinner-opacity, 0.9)) !important; }
-    .loading-spinner--light .loading-spinner__message { color: #475569 !important; }
+    .loading-spinner--light .loading-spinner__message { color: var(--gray-600, #475569) !important; }
     .loading-spinner--dark { background-color: rgba(15, 23, 42, var(--spinner-opacity, 0.9)) !important; }
-    .loading-spinner--dark .loading-spinner__message { color: #cbd5e1 !important; }
+    .loading-spinner--dark .loading-spinner__message { color: var(--gray-300, #cbd5e1) !important; }
     .loading-spinner--transparent,
     .loading-spinner--transparent.loading-spinner--light,
     .loading-spinner--transparent.loading-spinner--dark { background-color: transparent !important; }

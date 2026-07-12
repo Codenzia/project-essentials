@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Codenzia\ProjectEssentials\Forms\Components;
 
 use Codenzia\ProjectEssentials\Helpers\TailwindHelper;

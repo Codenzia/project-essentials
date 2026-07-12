@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Codenzia\ProjectEssentials\Traits;
 
 use Filament\Actions\Action;
@@ -10,6 +12,12 @@ use Filament\Actions\Action;
 // AND Filament\Infolists\Concerns\InteractsWithInfolists (for unmountInfolistAction and $mountedInfolistActions).
 // Filament's Page classes (like ViewRecord, CreateRecord) typically already include these.
 // ****************************************************************************************************************************************
+/**
+ * @deprecated Filament v3.3.32 workaround; not needed on v4/v5. The
+ * configureTableAction()/fixTableActionCancel() half also references
+ * mountedTableActions/unmountTableAction, which no longer exist on v4/v5
+ * (table actions merged into the page action stack), making it a silent no-op.
+ */
 trait CanFixFilamentActionCancel
 {
     /**

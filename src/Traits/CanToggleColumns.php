@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Codenzia\ProjectEssentials\Traits;
 
 use Filament\Actions\Action;
@@ -128,6 +130,11 @@ trait CanToggleColumns
 
     /**
      * Build a flat array of toggleable columns and disable default Filament toggle.
+     *
+     * Note: this intentionally mutates the caller's original column instances
+     * (unlike filterColumnsRecursive(), which clones) — disabling ->toggleable()
+     * on the source columns is what suppresses Filament's built-in column-toggle
+     * UI in favor of this trait's own toggle dropdown.
      */
     protected function buildToggleableColumns(array $columns): array
     {
@@ -225,16 +232,23 @@ trait CanToggleColumns
         // Merge all actions
         $actions = array_merge($actions, $columnActions);
 
+        $marginClass = match (true) {
+            $margin >= 16 => 'me-4',
+            $margin >= 12 => 'me-3',
+            $margin >= 8 => 'me-2',
+            $margin >= 4 => 'me-1',
+            default => '',
+        };
+
         return ActionGroup::make($actions)
             ->tooltip(__('Toggle columns on/off'))
             ->label('')
             ->icon('heroicon-o-adjustments-horizontal')
-            ->color('white')
+            ->color('gray')
             ->iconSize(IconSize::Medium)
             ->iconButton()
             ->extraAttributes([
-                'class' => 'table-columns-toggle',
-                'style' => $margin > 0 ? "margin-right: {$margin}px !important;" : '',
+                'class' => trim("table-columns-toggle {$marginClass}"),
             ]);
     }
 
@@ -243,7 +257,7 @@ trait CanToggleColumns
      */
     protected function getColumnKey(Column $column): string
     {
-        return $column->getName() ?? spl_object_hash($column);
+        return $column->getName();
     }
 
     /**
@@ -312,7 +326,7 @@ trait CanToggleColumns
      */
     public function getToggleAllLabel(): string
     {
-        return $this->areAllColumnsVisible() ? 'Hide All' : 'Show All';
+        return $this->areAllColumnsVisible() ? __('Hide All') : __('Show All');
     }
 
     /**

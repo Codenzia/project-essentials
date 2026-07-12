@@ -17,4 +17,15 @@ return [
          */
         'team_column' => 'department_id',
     ],
+
+    /**
+     * Activity logging configuration.
+     */
+    'activity_log' => [
+        /**
+         * Whether model writes triggered from the console (artisan commands,
+         * queued jobs, scheduled tasks) should also be audited.
+         */
+        'log_console' => true,
+    ],
 ];

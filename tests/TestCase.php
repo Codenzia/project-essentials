@@ -33,4 +33,9 @@ class TestCase extends Orchestra
             'prefix' => '',
         ]);
     }
+
+    protected function defineDatabaseMigrations(): void
+    {
+        $this->loadMigrationsFrom(__DIR__ . '/../database/migrations');
+    }
 }

@@ -13,7 +13,9 @@ use Filament\Forms\Components\Select;
 use Filament\Notifications\Notification;
 use Filament\Schemas\Components\Actions as SchemaActions;
 use Filament\Schemas\Components\Section;
+use Filament\Schemas\Components\Utilities\Set;
 use Illuminate\Support\Arr;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 
 /**
@@ -99,7 +101,7 @@ trait HasPageSettings
             ->modalHeading(__('Page Settings'))
             ->slideOver()
             ->modalWidth('lg')
-            ->form($formSchema)
+            ->schema($formSchema)
             ->fillForm(fn (): array => $this->getPageSettingsData())
             ->action(function (array $data) {
                 $this->savePageSettings($data);
@@ -344,9 +346,7 @@ trait HasPageSettings
         $page = $this->normalizePageKey();
         $scope = $this->getPageSettingsScope();
 
-        foreach ($users as $userId) {
-            PageSetting::persist((int) $userId, $page, $settings, $order, $scope);
-        }
+        $this->upsertPageSettingsForUsers($users, $page, $settings, $order, $scope);
 
         Notification::make()
             ->success()
@@ -373,9 +373,7 @@ trait HasPageSettings
         $page = $this->normalizePageKey();
         $scope = $this->getPageSettingsScope();
 
-        foreach ($users as $userId) {
-            PageSetting::persist((int) $userId, $page, $settings, $order, $scope);
-        }
+        $this->upsertPageSettingsForUsers($users, $page, $settings, $order, $scope);
 
         Notification::make()
             ->success()
@@ -383,6 +381,31 @@ trait HasPageSettings
                 'count' => $users->count(),
             ]))
             ->send();
+    }
+
+    /**
+     * Bulk-upsert the same settings/order for a collection of user ids in a single query.
+     */
+    private function upsertPageSettingsForUsers(Collection $userIds, string $page, array $settings, ?array $order, ?string $scope): void
+    {
+        if ($userIds->isEmpty()) {
+            return;
+        }
+
+        $scope ??= '';
+        $now = now();
+
+        $rows = $userIds->map(fn ($userId): array => [
+            'user_id' => (int) $userId,
+            'page' => $page,
+            'scope' => $scope,
+            'settings' => json_encode($settings),
+            'order' => json_encode($order),
+            'created_at' => $now,
+            'updated_at' => $now,
+        ])->all();
+
+        PageSetting::upsert($rows, ['user_id', 'page', 'scope'], ['settings', 'order', 'updated_at']);
     }
 
     // ─── Internal Helpers ───────────────────────────────────
@@ -420,8 +443,8 @@ trait HasPageSettings
                 ->label(__('Load Preset'))
                 ->placeholder(__('Choose a preset...'))
                 ->options($presets->pluck('name', 'id')->toArray())
-                ->reactive()
-                ->afterStateUpdated(function ($state, callable $set) use ($presets) {
+                ->live()
+                ->afterStateUpdated(function ($state, Set $set) use ($presets) {
                     if (! $state) {
                         return;
                     }
@@ -451,7 +474,7 @@ trait HasPageSettings
                     $component = $def->toFormComponent();
 
                     if ($this->pageSettingsLivePreview()) {
-                        $component->reactive()
+                        $component->live()
                             ->afterStateUpdated(function ($state, string $statePath) {
                                 $this->onPageSettingPreviewUpdated($statePath, $state);
                             });
@@ -461,8 +484,8 @@ trait HasPageSettings
                 }
 
                 // Raw Filament component — pass through, but add live preview if enabled
-                if ($this->pageSettingsLivePreview() && method_exists($def, 'reactive')) {
-                    $def->reactive()
+                if ($this->pageSettingsLivePreview() && method_exists($def, 'live')) {
+                    $def->live()
                         ->afterStateUpdated(function ($state, string $statePath) {
                             $this->onPageSettingPreviewUpdated($statePath, $state);
                         });
@@ -487,7 +510,7 @@ trait HasPageSettings
                                 ->label(__('Select All'))
                                 ->link()
                                 ->size('sm')
-                                ->action(function (callable $set) use ($groupKeys) {
+                                ->action(function (Set $set) use ($groupKeys) {
                                     foreach ($groupKeys as $key) {
                                         $set($key, true);
                                     }
@@ -497,7 +520,7 @@ trait HasPageSettings
                                 ->link()
                                 ->color('gray')
                                 ->size('sm')
-                                ->action(function (callable $set) use ($groupKeys) {
+                                ->action(function (Set $set) use ($groupKeys) {
                                     foreach ($groupKeys as $key) {
                                         $set($key, false);
                                     }

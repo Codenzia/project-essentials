@@ -1,10 +1,12 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Codenzia\ProjectEssentials\Traits;
 
+use Codenzia\ProjectEssentials\Models\ActivityLog;
 use Exception;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
 trait CanLogsActivity
@@ -14,22 +16,35 @@ trait CanLogsActivity
     public static function bootCanLogsActivity()
     {
         static::created(function ($model) {
-            if (! static::$skipLogging && ! app()->runningInConsole()) {
+            if (! static::$skipLogging && static::shouldLogFromConsole()) {
                 $model->logActivity('created');
             }
         });
 
         static::updated(function ($model) {
-            if (! static::$skipLogging && ! app()->runningInConsole() && $model->isDirty()) {
+            if (! static::$skipLogging && static::shouldLogFromConsole() && $model->isDirty()) {
                 $model->logActivity('updated');
             }
         });
 
         static::deleted(function ($model) {
-            if (! static::$skipLogging && ! app()->runningInConsole()) {
+            if (! static::$skipLogging && static::shouldLogFromConsole()) {
                 $model->logActivity('deleted');
             }
         });
+    }
+
+    /**
+     * Whether activity logging should proceed when the current request is
+     * running in the console (artisan commands, queued jobs, scheduled tasks).
+     */
+    protected static function shouldLogFromConsole(): bool
+    {
+        if (! app()->runningInConsole()) {
+            return true;
+        }
+
+        return (bool) config('project-essentials.activity_log.log_console', true);
     }
 
     public function logActivity(string $description)
@@ -158,15 +173,13 @@ trait CanLogsActivity
         ];
 
         try {
-            DB::table('activity_logs')->insert([
+            ActivityLog::create([
                 'user_id' => Auth::id(),
                 'model_id' => $model->getKey(),
                 'model' => static::class,
-                'current_data' => json_encode($safeData),
-                'new_data' => json_encode($dataForLogging),
+                'current_data' => $safeData,
+                'new_data' => $dataForLogging,
                 'description' => $descriptionText,
-                'created_at' => now(),
-                'updated_at' => now(),
             ]);
         } catch (Exception $e) {
             // Silently fail if logging fails (don't break the main operation)

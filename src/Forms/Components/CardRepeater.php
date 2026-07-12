@@ -644,7 +644,30 @@ class CardRepeater extends Field
 
             $records = $component->getCachedExistingRecords();
 
-            $state = $records->map(fn (Model $record): array => $record->attributesToArray())->toArray();
+            // attributesToArray() only yields columns; also hydrate the selected
+            // ids of any many-to-many relationship field so its select has real
+            // state — otherwise editing an item renders that field empty and its
+            // "required" validation fails on Done.
+            $relationFields = collect($component->getFormSchemaComponents())
+                ->filter(fn ($field): bool => method_exists($field, 'getName'))
+                ->map(fn ($field): string => $field->getName())
+                ->all();
+
+            $state = $records->map(function (Model $record) use ($relationFields): array {
+                $data = $record->attributesToArray();
+
+                foreach ($relationFields as $name) {
+                    if (array_key_exists($name, $data) || ! $record->isRelation($name)) {
+                        continue;
+                    }
+                    $relation = $record->{$name}();
+                    if ($relation instanceof BelongsToMany) {
+                        $data[$name] = $record->{$name}->pluck($relation->getRelatedKeyName())->all();
+                    }
+                }
+
+                return $data;
+            })->toArray();
 
             $component->rawState($state);
         });
@@ -713,15 +736,32 @@ class CardRepeater extends Field
                 $savedRecords[$itemKey] = $newRecord;
             }
 
-            // Cascade saveRelationships to child components (e.g. nested
-            // MorphToMany selects like bscPerspectives) so their relationship
-            // sync logic is executed against the correct saved record.
+            // Sync each item's many-to-many relationship fields directly from
+            // that item's own state.
+            //
+            // We deliberately do NOT route this through the child schema's
+            // saveRelationships(): getChildSchema() reuses shared child-component
+            // instances whose cached in-memory state leaks the last-edited item's
+            // values onto every record — so a single edited item would overwrite
+            // all others. Reading straight from $state keeps each record isolated
+            // and also covers newly-added items that never had a rendered schema.
+            $relationFields = collect($component->getFormSchemaComponents())
+                ->filter(fn ($field): bool => method_exists($field, 'getName'))
+                ->map(fn ($field): string => $field->getName())
+                ->all();
+
             foreach ($savedRecords as $itemKey => $record) {
-                $childSchema = $component->getChildSchema($itemKey);
-                if (! $childSchema) {
-                    continue;
+                $itemData = $state[$itemKey] ?? [];
+
+                foreach ($relationFields as $name) {
+                    if (! array_key_exists($name, $itemData) || ! $record->isRelation($name)) {
+                        continue;
+                    }
+                    if ($record->{$name}() instanceof BelongsToMany) {
+                        $ids = collect((array) $itemData[$name])->filter(fn ($v): bool => filled($v))->values()->all();
+                        $record->{$name}()->sync($ids);
+                    }
                 }
-                $childSchema->model($record)->saveRelationships();
             }
         });
 

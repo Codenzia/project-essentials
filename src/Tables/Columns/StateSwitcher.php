@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Codenzia\ProjectEssentials\Tables\Columns;
 
 use Filament\Tables\Columns\ToggleColumn;
@@ -56,12 +58,12 @@ class StateSwitcher extends ToggleColumn
 
     public function getOnLabel(): string
     {
-        return $this->onLabel;
+        return __($this->onLabel);
     }
 
     public function getOffLabel(): string
     {
-        return $this->offLabel;
+        return __($this->offLabel);
     }
 
     protected function setUp(): void

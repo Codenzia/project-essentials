@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Codenzia\ProjectEssentials\Tables;
 
 use Filament\Forms\Components\TextInput;
@@ -20,29 +22,27 @@ class FilamentTableHelper
     {
         return [
             TextColumn::make('created_at')
-                ->dateTime()
                 ->date(config('app.date_format'))
                 ->sortable()
                 ->size(TextSize::ExtraSmall)
                 ->toggleable(isToggledHiddenByDefault: true)
-                ->label('Created At'),
+                ->label(__('Created At')),
 
             TextColumn::make('updated_at')
-                ->dateTime()
                 ->date(config('app.date_format'))
                 ->size(TextSize::ExtraSmall)
                 ->sortable()
                 ->toggleable(isToggledHiddenByDefault: true)
-                ->label('Updated At'),
+                ->label(__('Updated At')),
 
             TextColumn::make('createdByUser.name')
-                ->label('Created By')
+                ->label(__('Created By'))
                 ->size(TextSize::ExtraSmall)
                 ->sortable()
                 ->toggleable(isToggledHiddenByDefault: true),
 
             TextColumn::make('updatedByUser.name')
-                ->label('Updated By')
+                ->label(__('Updated By'))
                 ->size(TextSize::ExtraSmall)
                 ->sortable()
                 ->toggleable(isToggledHiddenByDefault: true),
@@ -111,7 +111,7 @@ class FilamentTableHelper
                         TextInput::make($column)
                             ->placeholder(__($label))
                             ->extraAttributes(['class' => 'search-filter'])
-                            ->label(''),
+                            ->hiddenLabel(),
                     ])
                     ->query(function (Builder $query, array $data) use ($column): Builder {
                         return $query
