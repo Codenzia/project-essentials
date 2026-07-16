@@ -1404,6 +1404,54 @@ Displays user avatars with automatic fallback. Works standalone or within Filame
 <x-project-essentials::user-avatar :user="$user" size="size-10" />
 ```
 
+### PaymentTimeline
+
+Vertical timeline of dated entries (payments, receipts, ledger events) with a status dot and optional badge, in four modes.
+
+```blade
+<x-project-essentials::payment-timeline
+    mode="combined"
+    height="24.75rem"
+    :items="[
+        ['date' => '11 Aug 2026', 'date_iso' => '2026-08-11', 'title' => '520 JOD paid — Flat', 'badge' => 'Paid', 'color' => 'success'],
+        ['date' => '5 Aug 2026', 'date_iso' => '2026-08-05', 'title' => '900 JOD — 6 days late', 'badge' => 'Late', 'color' => 'warning', 'late' => true],
+    ]"
+    empty="No payments yet."
+/>
+```
+
+**Props**
+
+| Prop | Default | Purpose |
+|---|---|---|
+| `items` | `[]` | Entry array — schema below |
+| `empty` | `null` | Message when there are no items |
+| `mode` | `'list'` | `'list'` \| `'scroll'` \| `'grouped'` \| `'combined'` |
+| `height` | `'24.75rem'` | Viewport height for `scroll`/`combined`. A CSS length fixes the height; `'fill'` (or `true`) makes the viewport stretch to its parent (`flex-1 min-h-0`) — use inside a flex-column card whose height is driven by a taller sibling so the list fills the card and only scrolls on overflow |
+| `lateLabel` | `__('Late')` | Heading of the pinned late group |
+
+**Item schema**
+
+| Key | Required | Notes |
+|---|---|---|
+| `date` | yes | Preformatted display string |
+| `title` | yes | Entry text (truncated) |
+| `badge` | no | Badge label (rendered via `<x-filament::badge>`) |
+| `color` | no | `success` \| `warning` \| `danger` \| `info` \| `gray` — dot + badge color |
+| `date_iso` | grouped/combined | Sortable `Y-m-d` — drives month grouping and sorting |
+| `late` | no | `true` pins the entry into the expanded "Late" group on top (grouped/combined). Deliberately separate from `color` — color is presentation, `late` is placement |
+
+**Modes**
+
+- `list` — the original flat timeline; items render in the order given (existing consumers are unaffected — this is the default and the old item shape needs no changes).
+- `scroll` — flat timeline in a fixed-height viewport: hidden scrollbar, native wheel/touch scrolling plus pointer-drag with momentum, soft edge fades.
+- `grouped` — collapsible month sections with counts and animated chevrons; items flagged `late` sit in a pinned, expanded group on top (oldest due first), months follow newest-first with the newest expanded. The component re-sorts in this mode.
+- `combined` — `grouped` rendered inside the `scroll` viewport.
+
+For `scroll`/`combined`, `height="fill"` (or `:height="true"`) drops the fixed pixel height and stretches the viewport with `flex-1 min-h-0` instead. Put the component inside a flex column (e.g. `<div class="… flex flex-col">` with the header marked `shrink-0`) and the list fills to the container's bottom, scrolling only when the content overflows — ideal when the card is stretched by a taller sibling in a CSS grid. The edge-fade masks and drag/momentum scrolling are anchored to the viewport and behave identically in fill mode.
+
+Grouped modes require `date_iso` on **every** item; when any item lacks it the component degrades gracefully (`grouped`→`list`, `combined`→`scroll`) and logs a warning instead of erroring. Month labels use `Carbon::translatedFormat('F Y')`, so they localize (incl. Arabic); RTL flips the chevrons and drag/scroll behave identically. Interactivity is Alpine-only — no Livewire round-trips. Note for consumer themes: the dot/late-group accents use `emerald-500`/`amber-500` utilities — make sure your Tailwind build `@source`s this package's blades (the standard Codenzia theme.css already does).
+
 ### DropdownLink
 
 A styled link for use inside dropdown menus.

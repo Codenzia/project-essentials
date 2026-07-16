@@ -12,3 +12,6 @@ phpunit.xml
 phpstan.neon
 testbench.yaml
 vendor
+
+# Fable review docs (not part of the package)
+fable-*.md

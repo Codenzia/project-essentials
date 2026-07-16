@@ -8,6 +8,12 @@ All notable changes to `:package_name` will be documented in this file.
 
 ## [Unreleased]
 
+## [0.1.4] - 2026-07-16
+
+### Added
+- **`payment-timeline` fill height.** The `height` prop for `scroll`/`combined` now also accepts `'fill'` (or `true`): the viewport drops its fixed pixel height and stretches to the parent via `flex-1 min-h-0` (the component root becomes a flex column too). Fixed CSS lengths keep working and the default (`24.75rem`) is unchanged. Use inside a flex-column card so the list fills the card and only scrolls on overflow — fixes dead space below the list when a card is stretched by a taller grid sibling. Edge-fade masks and drag/momentum scrolling stay anchored to the viewport and behave identically. README + `PaymentTimelineTest` updated.
+- **`payment-timeline` modes.** New `mode` prop — `list` (default, unchanged original behavior and item shape), `scroll` (fixed-height viewport with hidden scrollbar, wheel/touch + pointer-drag scrolling with momentum, edge fades), `grouped` (collapsible month sections with counts and animated chevrons; `late: true` items pin into an expanded "Late" group on top; newest month open), and `combined` (grouped inside the scroll viewport). New props: `height` (scroll viewport, default `24.75rem`) and `lateLabel`. New optional item keys: `date_iso` (sortable `Y-m-d`, required by grouped/combined) and `late` (bool). Grouped modes degrade gracefully (`grouped`→`list`, `combined`→`scroll` + logged warning) when `date_iso` is missing, so pre-existing consumers are untouched. Alpine-only interactivity; light + dark + RTL. Backed by 9 Pest render tests (`PaymentTimelineTest`); README section with the full prop/item reference.
+
 ## [0.1.1] - 2026-06-25
 
 ### Added
