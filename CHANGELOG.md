@@ -8,6 +8,18 @@ All notable changes to `:package_name` will be documented in this file.
 
 ## [Unreleased]
 
+## [0.1.5] - 2026-07-20
+
+### Fixed
+- **`payment-timeline` group headers (and any descendant control) were unclickable in `scroll`/`combined` mode.** The drag-to-scroll viewport called `setPointerCapture` on every `pointerdown`, which retargets the trailing `pointerup`/`click` to the viewport itself — so the browser dispatched the `click` on the scroll container (the common ancestor) and the collapsible month-header `<button>` inside it never received it. Toggling looked completely dead with no console error. Pointer capture is now **deferred until an actual drag** (movement past a 3px threshold); a plain click reaches its target and toggles the group, while drag-to-scroll still captures once a drag begins and releases on pointer-up. Regression-guarded in `PaymentTimelineTest`.
+
+### Added
+- **`payment-timeline` height modes are now first-class.** The `height` prop for `scroll`/`combined` accepts:
+  - **a bare number of px** (`height="520"`) in addition to any CSS length (`'34rem'`) — a fixed-height viewport that scrolls internally while the card chrome stays put;
+  - **`'auto'`** — drops the viewport bound entirely; the list grows with its content and never scrolls internally (the page scrolls). No scroll container, drag, or edge fades are rendered.
+
+  `'fill'` is unchanged but its contract is now documented explicitly: it **only** bounds when a taller ancestor imposes a height (a flex-column card stretched by a taller grid sibling). With no such bound it resolves to content height and grows unbounded — prefer a fixed `height` (or `'auto'`) for standalone cards. README updated with all three behaviors and examples; `PaymentTimelineTest` covers px-normalization and `auto`.
+
 ## [0.1.4] - 2026-07-16
 
 ### Added

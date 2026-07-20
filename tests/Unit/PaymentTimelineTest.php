@@ -130,3 +130,38 @@ it('treats an unknown mode as list', function () {
     expect($html)->toContain('550 JOD paid — Apt 4B')
         ->and($html)->not->toContain('class="pe-payment-timeline-scroll"');
 });
+
+it('treats a bare number height as pixels', function () {
+    $html = renderTimeline(['mode' => 'combined', 'height' => '520']);
+
+    expect($html)->toContain('height: 520px')          // normalized to px
+        ->and($html)->not->toContain('height: 520;')   // never an invalid bare length
+        ->and($html)->toContain('class="pe-payment-timeline-scroll"')
+        ->and($html)->toContain('grid-template-rows');
+});
+
+it('grows without an internal scroll viewport when height is "auto"', function () {
+    $html = renderTimeline(['mode' => 'combined', 'height' => 'auto']);
+
+    // No bounded viewport: the list renders its groups directly and grows with content.
+    expect($html)->not->toContain('class="pe-payment-timeline-scroll"')
+        ->and($html)->not->toContain('overflow-y: auto')
+        ->and($html)->not->toContain('mask-image')
+        ->and($html)->toContain('grid-template-rows');   // combined still groups
+});
+
+it('defers pointer capture until an actual drag so descendant clicks (group headers) fire', function () {
+    $html = renderTimeline(['mode' => 'combined', 'height' => '20rem']);
+
+    // Regression guard: capturing the pointer on pointerdown retargets the trailing
+    // click to the scroll container, so group-header buttons never toggle. Capture
+    // must happen only after movement crosses the drag threshold.
+    expect($html)->toContain('setPointerCapture')                          // still wired for drag
+        ->and($html)->toContain('releasePointerCapture')                   // and released after
+        ->and($html)->toMatch('/Math\.abs\(e\.clientY - this\.startY\) > 3/'); // threshold gate
+
+    // down() must NOT capture immediately — assert setPointerCapture is absent from
+    // the down handler body (it lives in move(), after the threshold check).
+    $down = substr($html, strpos($html, 'down(e)'), strpos($html, 'move(e)') - strpos($html, 'down(e)'));
+    expect($down)->not->toContain('setPointerCapture');
+});

@@ -1427,7 +1427,7 @@ Vertical timeline of dated entries (payments, receipts, ledger events) with a st
 | `items` | `[]` | Entry array — schema below |
 | `empty` | `null` | Message when there are no items |
 | `mode` | `'list'` | `'list'` \| `'scroll'` \| `'grouped'` \| `'combined'` |
-| `height` | `'24.75rem'` | Viewport height for `scroll`/`combined`. A CSS length fixes the height; `'fill'` (or `true`) makes the viewport stretch to its parent (`flex-1 min-h-0`) — use inside a flex-column card whose height is driven by a taller sibling so the list fills the card and only scrolls on overflow |
+| `height` | `'24.75rem'` | Viewport height for `scroll`/`combined`. **A CSS length** (`'24.75rem'`, `'520px'`) **or a bare number of px** (`'520'`) → fixed-height viewport that scrolls internally. **`'auto'`** → no bound: the list grows with its content and never scrolls internally (the page scrolls). **`'fill'`** (or `true`) → stretch to a **bounded** flex-column parent (see the caveat below) |
 | `lateLabel` | `__('Late')` | Heading of the pinned late group |
 
 **Item schema**
@@ -1448,7 +1448,23 @@ Vertical timeline of dated entries (payments, receipts, ledger events) with a st
 - `grouped` — collapsible month sections with counts and animated chevrons; items flagged `late` sit in a pinned, expanded group on top (oldest due first), months follow newest-first with the newest expanded. The component re-sorts in this mode.
 - `combined` — `grouped` rendered inside the `scroll` viewport.
 
-For `scroll`/`combined`, `height="fill"` (or `:height="true"`) drops the fixed pixel height and stretches the viewport with `flex-1 min-h-0` instead. Put the component inside a flex column (e.g. `<div class="… flex flex-col">` with the header marked `shrink-0`) and the list fills to the container's bottom, scrolling only when the content overflows — ideal when the card is stretched by a taller sibling in a CSS grid. The edge-fade masks and drag/momentum scrolling are anchored to the viewport and behave identically in fill mode.
+**Height behaviors** (for `scroll`/`combined`):
+
+- **Fixed height** — `height="520"` (bare px), `height="34rem"`, or any CSS length: the viewport is capped and the list scrolls **inside** it (hidden scrollbar, wheel/touch + pointer-drag with momentum, edge fades), while the surrounding card chrome (title, "View all") stays put. Use this for a **standalone card** that must not grow as sections expand — it's the most predictable option.
+
+  ```blade
+  <x-project-essentials::payment-timeline mode="combined" height="520" :items="$items" />
+  ```
+
+- **Auto height** — `height="auto"`: the viewport bound is dropped entirely; the list renders its groups directly and **grows with its content** (the page scrolls, not the widget). No internal scroll, drag, or edge fades. Use when the timeline should expand inline and the surrounding layout absorbs the height.
+
+  ```blade
+  <x-project-essentials::payment-timeline mode="combined" height="auto" :items="$items" />
+  ```
+
+- **Fill height** — `height="fill"` (or `:height="true"`): drops the fixed pixel height and stretches the viewport with `flex-1 min-h-0`. **Caveat — `fill` only bounds when an ancestor imposes a height.** It's designed for a flex-column card that a **taller** grid sibling stretches (the list then fills the leftover space and scrolls on overflow, removing dead space below it). If nothing above it is bounded (e.g. a standalone card, or a card whose own content is the tallest thing in its grid row), `fill` resolves to content height and **grows unbounded** — reach for a fixed `height` (or `auto`) instead. Put the component inside a flex column (`<div class="… flex flex-col">` with the header marked `shrink-0`).
+
+The edge-fade masks and drag/momentum scrolling are anchored to the viewport and behave identically in the fixed and fill height modes.
 
 Grouped modes require `date_iso` on **every** item; when any item lacks it the component degrades gracefully (`grouped`→`list`, `combined`→`scroll`) and logs a warning instead of erroring. Month labels use `Carbon::translatedFormat('F Y')`, so they localize (incl. Arabic); RTL flips the chevrons and drag/scroll behave identically. Interactivity is Alpine-only — no Livewire round-trips. Note for consumer themes: the dot/late-group accents use `emerald-500`/`amber-500` utilities — make sure your Tailwind build `@source`s this package's blades (the standard Codenzia theme.css already does).
 

@@ -6,6 +6,7 @@ namespace Codenzia\ProjectEssentials\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\UniqueConstraintViolationException;
 
 class PageSetting extends Model
 {
@@ -66,7 +67,7 @@ class PageSetting extends Model
 
         try {
             return static::updateOrCreate($keys, $values);
-        } catch (\Illuminate\Database\UniqueConstraintViolationException) {
+        } catch (UniqueConstraintViolationException) {
             // Loser of a concurrent insert race retries as an update.
             return static::updateOrCreate($keys, $values);
         }

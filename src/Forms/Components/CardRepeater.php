@@ -12,6 +12,7 @@ use Filament\Forms\Components\Field;
 use Filament\Forms\Components\Select;
 use Filament\Resources\Pages\ViewRecord;
 use Filament\Schemas\Schema;
+use Filament\Support\Enums\Alignment;
 use Illuminate\Contracts\Support\Htmlable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
@@ -573,7 +574,7 @@ class CardRepeater extends Field
         return $this->evaluate($this->addIcon);
     }
 
-    public function addActionAlignment(\Filament\Support\Enums\Alignment | string | Closure | null $a): static
+    public function addActionAlignment(Alignment | string | Closure | null $a): static
     {
         $this->addAlignment = $a;
 
@@ -584,7 +585,7 @@ class CardRepeater extends Field
     {
         $alignment = $this->evaluate($this->addAlignment);
 
-        if ($alignment instanceof \Filament\Support\Enums\Alignment) {
+        if ($alignment instanceof Alignment) {
             return $alignment->value;
         }
 

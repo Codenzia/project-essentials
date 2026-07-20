@@ -3,7 +3,11 @@
                              //        'date_iso' => ?string (sortable Y-m-d — REQUIRED for grouped/combined), 'late' => ?bool (pins into the Late group)]
     'empty' => null,         // message shown when there are no items
     'mode' => 'list',        // 'list' (default, original flat timeline) | 'scroll' | 'grouped' | 'combined'
-    'height' => '24.75rem',  // viewport height for the scroll/combined modes; 'fill' (or true) stretches to the parent (flex-1)
+    'height' => '24.75rem',  // scroll/combined viewport height. A CSS length (e.g. '24.75rem',
+                             // '520px') or a bare number of px ('520') → fixed-height viewport that
+                             // scrolls internally (header/list-chrome stay put). 'auto' → no bound:
+                             // the list grows with its content and never scrolls internally. 'fill'
+                             // (or true) → stretch to a bounded flex-column parent (see the note below).
     'lateLabel' => null,     // heading of the pinned late group (defaults to "Late")
 ])
 
@@ -67,8 +71,17 @@
     $scrollable = in_array($mode, ['scroll', 'combined'], true);
 
     // 'fill' makes the scroll viewport stretch to the parent (flex-1) instead of a
-    // fixed pixel height — for cards whose height is driven by a taller sibling.
+    // fixed pixel height — ONLY bounds when an ancestor imposes a height (a
+    // flex-column card that a TALLER grid sibling stretches). With no such bound the
+    // list grows unbounded, so prefer an explicit height for standalone cards.
     $fill = $scrollable && ($height === 'fill' || $height === true);
+
+    // 'auto' opts out of the fixed viewport entirely: the list grows with its content
+    // and never scrolls internally (the surrounding page scrolls instead).
+    $auto = $scrollable && ($height === 'auto');
+
+    // A bare number is treated as pixels so consumers can pass height="520".
+    $cssHeight = is_numeric($height) ? $height.'px' : $height;
 
     $dotClasses = [
         'success' => 'bg-emerald-500',
@@ -90,28 +103,36 @@
     @if ($items->isEmpty())
         <p class="py-6 text-center text-sm text-gray-400 dark:text-gray-500">{{ $empty }}</p>
     @else
-        @if ($scrollable)
+        @if ($scrollable && ! $auto)
             {{-- Fixed-height viewport: hidden scrollbar, native wheel/touch scroll plus
                  pointer-drag with momentum. The mask fades rows at the cut edges. A drag
                  swallows the trailing click so group headers don't toggle accidentally. --}}
             <div
                 @class(['pe-payment-timeline-scroll', 'min-h-0 flex-1' => $fill])
                 x-data="{
-                    dragging: false, moved: false, lastY: 0, vel: 0, raf: null,
+                    dragging: false, moved: false, captured: false, pointerId: null, startY: 0, lastY: 0, vel: 0, raf: null,
                     down(e) {
-                        this.dragging = true; this.moved = false; this.lastY = e.clientY; this.vel = 0;
+                        this.dragging = true; this.moved = false; this.captured = false;
+                        this.pointerId = e.pointerId; this.startY = e.clientY; this.lastY = e.clientY; this.vel = 0;
                         if (this.raf) cancelAnimationFrame(this.raf);
-                        this.$el.setPointerCapture(e.pointerId);
                     },
                     move(e) {
                         if (! this.dragging) return;
                         const dy = e.clientY - this.lastY;
-                        if (Math.abs(dy) > 2) this.moved = true;
-                        this.$el.scrollTop -= dy; this.vel = dy; this.lastY = e.clientY;
+                        // Defer pointer capture until an actual drag begins: capturing on
+                        // pointerdown retargets the trailing pointerup/click to this element,
+                        // so clicks on descendant controls (group headers) never fire.
+                        if (! this.moved && Math.abs(e.clientY - this.startY) > 3) {
+                            this.moved = true;
+                            try { this.$el.setPointerCapture(this.pointerId); this.captured = true; } catch (e) {}
+                        }
+                        if (this.moved) { this.$el.scrollTop -= dy; this.vel = dy; }
+                        this.lastY = e.clientY;
                     },
                     up() {
                         if (! this.dragging) return;
                         this.dragging = false;
+                        if (this.captured) { try { this.$el.releasePointerCapture(this.pointerId); } catch (e) {} this.captured = false; }
                         const glide = () => {
                             this.vel *= 0.94;
                             if (Math.abs(this.vel) < 0.4) return;
@@ -130,7 +151,7 @@
                 x-on:pointercancel="up"
                 x-on:click.capture="swallow"
                 :style="{ cursor: dragging ? 'grabbing' : 'grab', 'user-select': dragging ? 'none' : 'auto' }"
-                style="{{ $fill ? '' : 'height: '.$height.'; ' }}overflow-y: auto; overscroll-behavior: contain; scrollbar-width: none; touch-action: pan-y; mask-image: linear-gradient(to bottom, transparent 0, #000 0.875rem, #000 calc(100% - 1.125rem), transparent 100%); -webkit-mask-image: linear-gradient(to bottom, transparent 0, #000 0.875rem, #000 calc(100% - 1.125rem), transparent 100%); padding-block: 0.25rem;"
+                style="{{ $fill ? '' : 'height: '.$cssHeight.'; ' }}overflow-y: auto; overscroll-behavior: contain; scrollbar-width: none; touch-action: pan-y; mask-image: linear-gradient(to bottom, transparent 0, #000 0.875rem, #000 calc(100% - 1.125rem), transparent 100%); -webkit-mask-image: linear-gradient(to bottom, transparent 0, #000 0.875rem, #000 calc(100% - 1.125rem), transparent 100%); padding-block: 0.25rem;"
             >
                 @if ($needsGroups)
                     @include('project-essentials::components.payment-timeline.groups', ['groups' => $groups, 'dotClasses' => $dotClasses])
