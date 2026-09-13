@@ -31,9 +31,11 @@ class DateRangeFilter extends Filter
         $this->query(function (Builder $query, array $data): Builder {
             $range = $data[$this->getName()] ?? [];
 
+            // Half-open boundaries instead of whereDate() so an indexed timestamp column
+            // stays usable and the whole of the end day is still included.
             return $query
-                ->when($range['from'] ?? null, fn (Builder $query, $date) => $query->whereDate($this->getColumn(), '>=', $date))
-                ->when($range['to'] ?? null, fn (Builder $query, $date) => $query->whereDate($this->getColumn(), '<=', $date));
+                ->when($range['from'] ?? null, fn (Builder $query, $date) => $query->where($this->getColumn(), '>=', Carbon::parse($date)->startOfDay()))
+                ->when($range['to'] ?? null, fn (Builder $query, $date) => $query->where($this->getColumn(), '<', Carbon::parse($date)->startOfDay()->addDay()));
         });
 
         $this->indicateUsing(function (array $data): array {
@@ -45,7 +47,7 @@ class DateRangeFilter extends Filter
                 return [];
             }
 
-            $format = config('app.date_format', 'd M, Y');
+            $format = config('app.date_format') ?? 'd M, Y';
             $label = $this->getPlaceholder() . ': ';
 
             if ($from && $to) {

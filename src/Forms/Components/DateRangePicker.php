@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Codenzia\ProjectEssentials\Forms\Components;
 
+use Closure;
 use Filament\Forms\Components\Field;
 use Filament\Forms\Components\Hidden;
 use Filament\Schemas\Components\Utilities\Set;
@@ -49,6 +50,34 @@ class DateRangePicker extends Field
             }
             $value = is_array($state) ? $state : ['from' => null, 'to' => null];
             $set($component->getToColumn(), $value['to'] ?? null);
+        });
+
+        // Client-side pickers are a convenience; the order of the two dates is enforced
+        // on the server for both single-field and split-column modes.
+        $this->rule(static fn (): Closure => static function (string $attribute, mixed $value, Closure $fail): void {
+            if (! is_array($value)) {
+                return;
+            }
+
+            $from = $value['from'] ?? null;
+            $to = $value['to'] ?? null;
+
+            if (! $from || ! $to) {
+                return;
+            }
+
+            try {
+                $start = Carbon::parse($from);
+                $end = Carbon::parse($to);
+            } catch (\Exception) {
+                $fail(__('The :attribute is not a valid date range.'));
+
+                return;
+            }
+
+            if ($start->greaterThan($end)) {
+                $fail(__('The :attribute must end on or after its start date.'));
+            }
         });
 
         $self = $this;
@@ -137,7 +166,7 @@ class DateRangePicker extends Field
 
     public function getDateFormat(): string
     {
-        return $this->dateFormat ?? config('app.date_format', 'd M, Y');
+        return $this->dateFormat ?? config('app.date_format') ?? 'd M, Y';
     }
 
     public function placeholder(string $placeholder): static

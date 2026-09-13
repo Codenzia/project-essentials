@@ -76,7 +76,7 @@ class DateHelper
      */
     public static function readableDateFormat(?string $format = null): string
     {
-        $format ??= config('app.date_format');
+        $format ??= config('app.date_format') ?? 'Y-m-d';
 
         return strtr($format, [
             'Y' => 'yyyy', 'y' => 'yy',
@@ -91,7 +91,7 @@ class DateHelper
      */
     public static function readableDateTimeFormat(?string $format = null): string
     {
-        $format ??= config('app.datetime_format');
+        $format ??= config('app.datetime_format') ?? 'Y-m-d H:i';
 
         return strtr($format, [
             'Y' => 'yyyy', 'y' => 'yy',

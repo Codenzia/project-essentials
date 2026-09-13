@@ -19,7 +19,7 @@ class DateRangeHelper
             return null;
         }
 
-        $format = config('app.date_format', 'd/m/Y');
+        $format = config('app.date_format') ?? 'd/m/Y';
 
         return Carbon::parse($start)->format($format)
             . " $separator " .
@@ -39,7 +39,7 @@ class DateRangeHelper
         $startDate = Carbon::parse($start);
         $endDate = Carbon::parse($end);
 
-        $baseFormat = config('app.date_format', 'd/m/Y');
+        $baseFormat = config('app.date_format') ?? 'd/m/Y';
 
         // detect order: does config put day before month?
         $dayFirst = strpos($baseFormat, 'd') < strpos($baseFormat, 'm');
@@ -63,8 +63,12 @@ class DateRangeHelper
     }
 
     /**
-     * Parse a "date - date" string into Y-m-d start_date and end_date.
-     * Will throw an exception if the date does not match config format.
+     * Parse a "date - date" string into start_date and end_date, both rendered in
+     * config('app.date_format').
+     *
+     * Throws when the string matches no supported format, when either side is an
+     * impossible calendar date (31/02/2026 is rejected, never rolled into March),
+     * or when the end date falls before the start date.
      */
     public static function parse(?string $dateRange, $separator = '-', $endDateOptional = false): array
     {
@@ -88,8 +92,10 @@ class DateRangeHelper
             $end_date = $dates[1];
         }
 
+        $displayFormat = config('app.date_format') ?? 'd/m/Y';
+
         $formats = [
-            config('app.date_format', 'd/m/Y'), // preferred
+            $displayFormat, // preferred
             'd/m/Y',
             'm/d/Y',
             'Y-m-d',
@@ -97,29 +103,73 @@ class DateRangeHelper
             'm-d-Y',
         ];
 
-        $start = null;
-        $end = null;
-
         foreach ($formats as $format) {
-            try {
-                $start = Carbon::createFromFormat($format, $start_date);
-                if ($end_date) {
-                    $end = Carbon::createFromFormat($format, $end_date);
-                }
-                if ($start && ($end || $endDateOptional)) {
-                    return [
-                        'start_date' => $start->format(config('app.date_format', 'd/m/Y')),
-                        'end_date' => $end?->format(config('app.date_format', 'd/m/Y')),
-                    ];
-                }
-            } catch (Exception $e) {
-                // just try the next format
+            $start = self::parseExact($format, $start_date);
+
+            if (! $start) {
+                continue;
             }
+
+            $end = null;
+
+            if ($end_date !== null) {
+                $end = self::parseExact($format, $end_date);
+
+                if (! $end) {
+                    continue;
+                }
+            }
+
+            if ($end && $start->greaterThan($end)) {
+                throw new InvalidArgumentException(
+                    "Date range [$dateRange] ends before it starts"
+                );
+            }
+
+            return [
+                'start_date' => $start->format($displayFormat),
+                'end_date' => $end?->format($displayFormat),
+            ];
         }
 
         throw new InvalidArgumentException(
             "Date range [$dateRange] does not match any supported formats"
         );
+    }
+
+    /**
+     * Parse one date strictly. Carbon rolls impossible dates over (31/02/2026 becomes
+     * 03/03/2026), so a value only counts as parsed when it round-trips to the input.
+     */
+    private static function parseExact(string $format, ?string $value): ?Carbon
+    {
+        if ($value === null) {
+            return null;
+        }
+
+        $value = trim($value);
+
+        if ($value === '') {
+            return null;
+        }
+
+        try {
+            $date = Carbon::createFromFormat($format, $value);
+        } catch (Exception) {
+            return null;
+        }
+
+        if (! $date instanceof Carbon) {
+            return null;
+        }
+
+        $errors = Carbon::getLastErrors();
+
+        if (is_array($errors) && (($errors['warning_count'] ?? 0) > 0 || ($errors['error_count'] ?? 0) > 0)) {
+            return null;
+        }
+
+        return $date->format($format) === $value ? $date : null;
     }
 
     public static function tryExplode(?string $dateRange, $separator = '-'): array

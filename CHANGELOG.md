@@ -1,12 +1,45 @@
 # Changelog
 
-All notable changes to `:package_name` will be documented in this file.
+All notable changes to `codenzia/project-essentials` will be documented in this file.
 
-## 1.0.0 - 202X-XX-XX
+## [0.2.1] - 2026-09-13
 
-- initial release
+### Fixed
+- `HasPageSettings` imported `Filament\Forms\Components\Component` for the `@return array<PageSettingDefinition|Component>` contracts on its schema builders. That class was removed in Filament v4, and it contradicted the actual return type of `PageSettingDefinition::toFormComponent()`, which already returns `Filament\Schemas\Components\Component`. The import now names the real class.
 
-## [Unreleased]
+### Added
+- `tests/BVT/FilamentImportsResolveTest` resolves every `use Filament\...;` import in `src/` against the installed Filament.
+
+## [0.2.0] - 2026-09-08
+
+### Changed — action required
+
+- **`StateSwitcher` now refuses an inline state change until the host registers a guard.** An inline column write bypasses the resource policy — Filament checks only the column's `hidden()`/`disabled()` state before saving — so a view-only user could flip a record by calling the Livewire method directly, and no transition rule was consulted. The column gains `authorizeStateChangeUsing(?Closure $callback)`, receiving `$record`, the `$state` about to be written and the `$column` name; the write happens only when it returns true. **Every existing `StateSwitcher` stops writing until this is set** — see the StateSwitcher section of the README.
+- **`applyPageSettingsToTeam()` no longer accepts a team from the caller.** It took `(int $teamId, ?string $teamRelation = null)` — an arbitrary column name and id off the wire behind a single boolean permission check, so an authorized manager could write settings for users outside their own team. The team now comes from the new overridable `getPageSettingsTeamId()` and the column from `config('project-essentials.page_settings.team_column')`; the method is refused (403) while the hook returns `null`. Both bulk-apply methods now select and upsert in chunks of 500 instead of plucking every id and building every row in memory.
+- **`DateRangeHelper::parse()` rejects impossible and reversed ranges.** Carbon rolled `31/02/2026` forward into `03/03/2026`, silently producing a start after the requested end; a parse now only succeeds when the value round-trips to its input, and a range whose end precedes its start throws `InvalidArgumentException`. The `Y-m-d` docblock was corrected to describe what the method actually returns (values in `config('app.date_format')`).
+
+### Fixed
+
+- **Tab ids were interpolated into Alpine expressions as raw JavaScript.** `responsive-tabs` emitted `activeTab === '{{ $tab['id'] }}'`, the tabs array through a bare `json_encode`, and the persist key / `wire:model` path as hand-quoted strings. Blade's HTML escaping does not protect a JavaScript string literal — the browser decodes entities before Alpine evaluates the expression — so a quote in an id derived from data broke out of the literal. Every JavaScript value now goes through `Js::from()`/`@js()`. Ordinary Blade escaping is unchanged for labels.
+- **The state switcher sent the Livewire component id where a record key belongs, and reported a false success.** `updateTableColumnState()` looks the record up by that argument, so the call resolved no record and returned `null` — which the view treated as success and used to move the switch. The view now passes `$getRecordKey()`, treats a `null`/error response as a failure, and renders the state the server actually persisted. Its `wire:key` also used PHP truthiness on the raw state, so `Active` and `Inactive` produced the same key and a `wire:ignore`d switch could stay stale after an external update; it now keys on the normalized on/off state.
+- **Page-setting presets ignored scope, order and their own default flag.** Presets were stored and queried per page only, so every scope of a scoped page shared one pool; applying a preset restored its values but left the previous item order; and `PageSettingPreset::getDefaultForPage()` was never called, so marking a preset default did nothing. Presets now carry a `scope` column resolved by the new overridable `getPageSettingsPresetScope()` (defaults to the page settings scope), applying a preset carries its order, and a user with no stored row for that page + scope is seeded from the default preset.
+- **A nested default was dropped by an older stored settings array.** `getPageSettingsData()` merged stored settings over defaults with a shallow `array_merge`, so adding a nested default under an existing top-level key lost every sibling. The merge is now recursive, with lists replaced wholesale rather than merged item by item.
+- **A password-only change was not audited at all.** `CanLogsActivity` stripped sensitive keys from the diff and then returned early when nothing was left, so a credential change left no record despite the comment promising one. Redacted keys are now kept with a `[redacted]` value so the event is recorded without the values, and sensitive keys nested inside a permitted array/JSON attribute are scrubbed recursively. A logging failure now records the model, key and exception class instead of the driver message, which can carry the SQL statement and its bound values.
+- **An explicitly null `app.date_format` / `app.datetime_format` bypassed the internal fallback.** `config('app.date_format', 'd M, Y')` returns `null` when the key exists and is null, which reached `DateRangePicker::getDateFormat()`'s `string` return type as a `TypeError`. Every date-format read in the package now uses a null-coalescing fallback (`DateRangePicker`, `DatePickerWithHint`, `DateTimePickerWithHint`, `DateRangeFilter`, `DateRangeHelper`).
+- **`DateRangeFilter` wrapped the filtered column in a date function.** `whereDate()` on an indexed timestamp column forces a per-row evaluation; the filter now uses half-open boundaries (`>= from 00:00:00`, `< to + 1 day`), which selects the same records and leaves the index usable.
+- **`CounterInput` had no server-side bounds and ignored its disabled state.** The rendered input and both +/- buttons stayed enabled and submittable for a disabled field, values alternated between numbers and strings (`state.replace()` fataled on a number, `parseInt(null)` produced `NaN`), and the icon-only buttons had no accessible name. The field now enforces whole-number/min/max validation on the server, honours `disabled()`, wires the input to the field's id, normalizes through `String`/finite-number checks, and labels both steppers.
+
+### Added
+
+- `CanLogsActivity::withoutActivityLogging(callable $callback)` — scoped suppression that restores the previous state in a `finally`, so a suppression cannot leak into the next job on a queue worker. The process-wide `$skipLogging` flag stays for backwards compatibility.
+- `CounterInput::minValue()` / `maxValue()` — bounds honoured by both the stepper and server-side validation (`minValue` defaults to `0`).
+- `DateRangePicker` now validates on the server that the range ends on or after it starts, in both single-field and split-column (`forColumns()`) mode.
+- Migration `add_scope_to_page_setting_presets_table` adds the preset `scope` column to an existing install; fresh installs get it from `create_page_settings_table`. **Existing apps must re-publish migrations and run `php artisan migrate`.**
+
+## [0.1.6] - 2026-07-21
+
+### Fixed
+- **`StateSwitcher` column fatal-500'd every table it appeared in.** The `state-switcher` blade echoed the record key as a bare `{{ $recordKey }}`, but under Filament v5 a column view's magic variables are first-class callables extracted from the component's public methods — so `$recordKey` resolved to the `recordKey()` **setter closure**, not the key string. Echoing it hit `htmlspecialchars(): Argument #1 ($string) must be of type string, Closure given` and the whole list page (e.g. Task-Off's `ListUsers`) returned 500. The blade now calls the resolved accessor `{{ $getRecordKey() }}`. The extra-attribute merge was also switched from `$attributes->merge($getExtraAttributes(), …)` to Filament core's `$getExtraAttributeBag()` convention, which resolves extra-attribute closures the same way core columns do. Regression-guarded by a Livewire render test (`StateSwitcherTest`).
 
 ## [0.1.5] - 2026-07-20
 

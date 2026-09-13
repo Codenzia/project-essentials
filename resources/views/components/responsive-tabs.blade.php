@@ -111,8 +111,10 @@
         }
     }
 
-    $tabsJson = json_encode($normalizedTabs);
-    $persistJson = $persist ? "'" . e($persist) . "'" : 'null';
+    $tabsJson = \Illuminate\Support\Js::from($normalizedTabs);
+    $persistJson = \Illuminate\Support\Js::from($persist);
+    $defaultActiveJson = \Illuminate\Support\Js::from($defaultActive);
+    $wireModelJson = \Illuminate\Support\Js::from($wireModel);
 
     $alignClasses = [
         'left' => 'justify-start',
@@ -123,9 +125,9 @@
     $isStacked = $layout === 'stacked';
 @endphp
 
-<div @if ($wireModel) x-data="responsiveTabs({ activeTabInit: $wire.entangle('{{ $wireModel }}').live, tabs: {{ $tabsJson }}, persistKey: {{ $persistJson }} })"
+<div @if ($wireModel) x-data="responsiveTabs({ activeTabInit: $wire.entangle({{ $wireModelJson }}).live, tabs: {{ $tabsJson }}, persistKey: {{ $persistJson }} })"
     @else
-        x-data="responsiveTabs({ activeTabInit: '{{ $defaultActive }}', tabs: {{ $tabsJson }}, persistKey: {{ $persistJson }} })" @endif
+        x-data="responsiveTabs({ activeTabInit: {{ $defaultActiveJson }}, tabs: {{ $tabsJson }}, persistKey: {{ $persistJson }} })" @endif
     {{ $attributes->except(['tabs', 'active', 'moreLabel', 'wire:model', 'wire:model.live', 'align', 'persist', 'layout'])->class(['w-full']) }}>
     <nav x-ref="nav" class="flex items-center {{ $isStacked ? 'gap-3' : 'gap-2' }} {{ $alignClass }}">
         @foreach ($normalizedTabs as $index => $tab)
@@ -136,11 +138,11 @@
                 @else
                     class="flex items-center gap-2 px-4 py-2.5 font-medium transition-all whitespace-nowrap shrink-0 border-b-2 border-transparent cursor-pointer {{ $tab['disabled'] ?? false ? 'opacity-50 cursor-not-allowed' : '' }}" @endif
                 x-bind:class="{
-                    @if ($isStacked) 'text-primary-500 dark:text-primary-400 !border-primary-500 dark:!border-primary-400 bg-primary-50 dark:bg-primary-900/20': activeTab === '{{ $tab['id'] }}',
-                        'text-gray-500 dark:text-gray-400 hover:text-primary-400 dark:hover:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-800': activeTab !== '{{ $tab['id'] }}',
+                    @if ($isStacked) 'text-primary-500 dark:text-primary-400 !border-primary-500 dark:!border-primary-400 bg-primary-50 dark:bg-primary-900/20': activeTab === @js($tab['id']),
+                        'text-gray-500 dark:text-gray-400 hover:text-primary-400 dark:hover:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-800': activeTab !== @js($tab['id']),
                     @else
-                        'text-primary-500 dark:text-primary-400 !border-gray-300 dark:!border-gray-600': activeTab === '{{ $tab['id'] }}',
-                        'text-gray-600 dark:text-gray-400 hover:text-primary-400 dark:hover:text-gray-200': activeTab !== '{{ $tab['id'] }}', @endif
+                        'text-primary-500 dark:text-primary-400 !border-gray-300 dark:!border-gray-600': activeTab === @js($tab['id']),
+                        'text-gray-600 dark:text-gray-400 hover:text-primary-400 dark:hover:text-gray-200': activeTab !== @js($tab['id']), @endif
                         '!hidden': !isVisible({{ $index }})
                 }">
                 @isset($tab['icon'])
@@ -149,7 +151,7 @@
                         @if ($isStacked)
                             <span class="relative">
                                 @if($iconColor)
-                                    <span @class([$iconColor]) x-bind:class="{ '!text-primary-500 dark:!text-primary-400': activeTab === '{{ $tab['id'] }}' }">
+                                    <span @class([$iconColor]) x-bind:class="{ '!text-primary-500 dark:!text-primary-400': activeTab === @js($tab['id']) }">
                                         <x-dynamic-component :component="$tab['icon']" class="w-5 h-5" />
                                     </span>
                                 @else
@@ -161,7 +163,7 @@
                             </span>
                         @else
                             @if($iconColor)
-                                <span @class([$iconColor]) x-bind:class="{ '!text-primary-500 dark:!text-primary-400': activeTab === '{{ $tab['id'] }}' }">
+                                <span @class([$iconColor]) x-bind:class="{ '!text-primary-500 dark:!text-primary-400': activeTab === @js($tab['id']) }">
                                     <x-dynamic-component :component="$tab['icon']" class="w-5 h-5" />
                                 </span>
                             @else
@@ -227,13 +229,13 @@
                         type="button"
                         class="w-full flex items-center gap-3 px-4 py-2.5 text-start transition-colors cursor-pointer"
                         x-bind:class="{
-                            'bg-primary-500/10 text-primary-500': activeTab === '{{ $tab['id'] }}',
-                            'text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700/50': activeTab !== '{{ $tab['id'] }}'
+                            'bg-primary-500/10 text-primary-500': activeTab === @js($tab['id']),
+                            'text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700/50': activeTab !== @js($tab['id'])
                         }">
                         @isset($tab['icon'])
                             @if (str_starts_with($tab['icon'], 'heroicon-') || View::exists('components.' . $tab['icon']))
                                 @if($tab['iconColor'] ?? null)
-                                    <span @class([$tab['iconColor']]) x-bind:class="{ '!text-primary-500 dark:!text-primary-400': activeTab === '{{ $tab['id'] }}' }">
+                                    <span @class([$tab['iconColor']]) x-bind:class="{ '!text-primary-500 dark:!text-primary-400': activeTab === @js($tab['id']) }">
                                         <x-dynamic-component :component="$tab['icon']" class="w-5 h-5" />
                                     </span>
                                 @else

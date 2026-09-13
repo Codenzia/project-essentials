@@ -150,3 +150,54 @@ it('dehydrateStateUsing in single-column mode passes the array through', functio
 
     expect($callback($state))->toBe(['from' => '2024-01-01', 'to' => '2024-12-31']);
 });
+
+it('falls back to the internal date format when the configured one is explicitly null', function () {
+    config()->set('app.date_format', null);
+
+    expect(DateRangePicker::make('date_range')->getDateFormat())->toBe('d M, Y');
+});
+
+it('fails validation when the end date is before the start date', function () {
+    $component = DateRangePicker::make('date_range');
+
+    $messages = [];
+    $fail = function (string $message) use (&$messages): void {
+        $messages[] = $message;
+    };
+
+    dateRangeRule($component)('date_range', ['from' => '2026-03-02', 'to' => '2026-03-01'], $fail);
+
+    expect($messages)->not->toBeEmpty();
+});
+
+it('passes validation for a range in order', function () {
+    $component = DateRangePicker::make('date_range');
+
+    $messages = [];
+    $fail = function (string $message) use (&$messages): void {
+        $messages[] = $message;
+    };
+
+    dateRangeRule($component)('date_range', ['from' => '2026-03-01', 'to' => '2026-03-02'], $fail);
+    dateRangeRule($component)('date_range', ['from' => null, 'to' => null], $fail);
+
+    expect($messages)->toBeEmpty();
+});
+
+/**
+ * Resolve the component's own closure validation rule.
+ */
+function dateRangeRule(DateRangePicker $component): Closure
+{
+    $rules = (fn () => $this->rules)->call($component);
+
+    foreach ($rules as [$rule, $condition]) {
+        $resolved = $component->evaluate($rule);
+
+        if ($resolved instanceof Closure) {
+            return $resolved;
+        }
+    }
+
+    throw new RuntimeException('DateRangePicker registered no closure validation rule.');
+}

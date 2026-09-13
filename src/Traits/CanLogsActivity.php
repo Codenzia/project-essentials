@@ -7,11 +7,40 @@ namespace Codenzia\ProjectEssentials\Traits;
 use Codenzia\ProjectEssentials\Models\ActivityLog;
 use Exception;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 
 trait CanLogsActivity
 {
+    /**
+     * Placeholder written in place of a sensitive value.
+     */
+    public const ACTIVITY_LOG_REDACTED = '[redacted]';
+
+    /**
+     * How deep nested attribute payloads are scrubbed before anything below is dropped.
+     */
+    private const ACTIVITY_LOG_MAX_DEPTH = 8;
+
     public static $skipLogging = false;
+
+    /**
+     * Run a callback with activity logging suppressed for this model.
+     *
+     * Restores the previous value even when the callback throws, so a suppression
+     * can never leak into the next request or the next job on a queue worker.
+     */
+    public static function withoutActivityLogging(callable $callback): mixed
+    {
+        $previous = static::$skipLogging;
+        static::$skipLogging = true;
+
+        try {
+            return $callback();
+        } finally {
+            static::$skipLogging = $previous;
+        }
+    }
 
     public static function bootCanLogsActivity()
     {
@@ -96,8 +125,14 @@ trait CanLogsActivity
             }
 
             // Redact sensitive values so a password change logs *that* it changed,
-            // not the hash values themselves.
-            $attributeDiffs = array_diff_key($attributeDiffs, array_flip($sensitive));
+            // not the hash values themselves. The key is kept so the change is still
+            // recorded — dropping it entirely made a password-only update invisible.
+            foreach (array_keys(array_intersect_key($attributeDiffs, array_flip($sensitive))) as $redactedKey) {
+                $attributeDiffs[$redactedKey] = [
+                    'old' => self::ACTIVITY_LOG_REDACTED,
+                    'new' => self::ACTIVITY_LOG_REDACTED,
+                ];
+            }
         }
 
         // Build description text
@@ -163,12 +198,18 @@ trait CanLogsActivity
             }
         }
 
-        // Redact sensitive attributes before persisting the raw data dumps.
-        $safeData = array_diff_key($currentData, array_flip($sensitive));
+        // Redact sensitive attributes before persisting the raw data dumps, including
+        // sensitive keys nested inside an otherwise permitted JSON/array attribute.
+        $safeData = $this->scrubSensitive(
+            array_diff_key($currentData, array_flip($sensitive)),
+            array_map('strtolower', $sensitive)
+        );
 
         // Prepare data for logging
         $dataForLogging = [
-            'attributes' => $isCreating ? $safeData : $attributeDiffs,
+            'attributes' => $isCreating
+                ? $safeData
+                : $this->scrubSensitive($attributeDiffs, array_map('strtolower', $sensitive)),
             'description' => $description,
         ];
 
@@ -182,9 +223,55 @@ trait CanLogsActivity
                 'description' => $descriptionText,
             ]);
         } catch (Exception $e) {
-            // Silently fail if logging fails (don't break the main operation)
-            \Log::error('Activity logging failed: ' . $e->getMessage());
+            // Never surface the driver message: it can carry the SQL statement and its
+            // bound values. Record what failed, not what was being written.
+            Log::error('Activity logging failed', [
+                'model' => static::class,
+                'model_id' => $model->getKey(),
+                'exception' => $e::class,
+            ]);
         }
+    }
+
+    /**
+     * Recursively replace sensitive keys inside an attribute payload, including keys
+     * nested in a JSON-encoded string column.
+     *
+     * @param  array<int, string>  $sensitiveKeys  lowercase key names to redact
+     */
+    private function scrubSensitive(mixed $value, array $sensitiveKeys, int $depth = 0): mixed
+    {
+        if ($depth > self::ACTIVITY_LOG_MAX_DEPTH) {
+            return self::ACTIVITY_LOG_REDACTED;
+        }
+
+        if (is_string($value)) {
+            $decoded = json_decode($value, true);
+
+            if (is_array($decoded) && json_last_error() === JSON_ERROR_NONE) {
+                return json_encode($this->scrubSensitive($decoded, $sensitiveKeys, $depth + 1));
+            }
+
+            return $value;
+        }
+
+        if (! is_array($value)) {
+            return $value;
+        }
+
+        $scrubbed = [];
+
+        foreach ($value as $key => $item) {
+            if (is_string($key) && in_array(strtolower($key), $sensitiveKeys, true)) {
+                $scrubbed[$key] = self::ACTIVITY_LOG_REDACTED;
+
+                continue;
+            }
+
+            $scrubbed[$key] = $this->scrubSensitive($item, $sensitiveKeys, $depth + 1);
+        }
+
+        return $scrubbed;
     }
 
     /**

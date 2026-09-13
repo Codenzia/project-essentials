@@ -1,32 +1,70 @@
+@php
+    $isDisabled = $isDisabled();
+    $minValue = $getMinValue();
+    $maxValue = $getMaxValue();
+@endphp
+
 <x-dynamic-component :component="$getFieldWrapperView()" :field="$field">
-    <div x-data="{ state: @entangle($getStatePath()) }" class="flex items-center">
+    <div
+        x-data="{
+            state: @entangle($getStatePath()),
+            min: @js($minValue),
+            max: @js($maxValue),
+            isDisabled: @js($isDisabled),
+            clamp(number) {
+                if (this.min !== null && number < this.min) {
+                    return this.min;
+                }
+                if (this.max !== null && number > this.max) {
+                    return this.max;
+                }
+                return number;
+            },
+            normalize(value) {
+                const number = Number.parseInt(String(value ?? '').replace(/[^0-9-]/g, ''), 10);
+
+                if (!Number.isFinite(number)) {
+                    return this.min ?? 0;
+                }
+
+                return this.clamp(number);
+            },
+            step(change) {
+                if (this.isDisabled) return;
+
+                this.state = this.clamp(this.normalize(this.state) + change);
+            },
+        }"
+        x-init="state = normalize(state)"
+        class="flex items-center">
         <!-- Decrement Button -->
-        <button type="button"
-            @click="state = Math.max(0, parseInt(state) - 1)"
+        <button type="button" aria-label="{{ __('Decrease') }}"
+            x-on:click="step(-1)" x-bind:disabled="isDisabled"
             class="bg-gray-100 dark:bg-gray-700 dark:hover:bg-gray-600 dark:border-gray-600 hover:bg-gray-200
                    border border-gray-300 rounded-s-lg p-3 h-11 focus:ring-gray-100 dark:focus:ring-gray-700
-                   focus:ring-2 focus:outline-none">
+                   focus:ring-2 focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed">
             <svg class="w-3 h-3 text-gray-900 dark:text-white" aria-hidden="true" fill="none" viewBox="0 0 18 2">
                 <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M1 1h16"/>
             </svg>
         </button>
 
         <!-- Number Input (Prevents Null & Ensures Min 0) -->
-        <input type="number" x-model="state" min="0"
-            @input="state = state.replace(/\D/g, '') || '0'"
-            @blur="if (state === '') state = '0'"
+        <input type="number" id="{{ $getId() }}" x-model="state"
+            x-bind:min="min" x-bind:max="max" x-bind:disabled="isDisabled"
+            @input="state = String(state ?? '').replace(/[^0-9-]/g, '')"
+            @blur="state = normalize(state)"
             class="cr-counter bg-gray-50 border-x-0 border-gray-300 h-11 text-center text-gray-900 text-sm
                    focus:ring-blue-500 focus:border-blue-500 block w-full py-2.5
                    dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white
-                   dark:focus:ring-blue-500 dark:focus:border-blue-500"
+                   dark:focus:ring-blue-500 dark:focus:border-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
             placeholder="0" />
 
         <!-- Increment Button -->
-        <button type="button"
-            @click="state = Math.max(0, parseInt(state) + 1)"
+        <button type="button" aria-label="{{ __('Increase') }}"
+            x-on:click="step(1)" x-bind:disabled="isDisabled"
             class="bg-gray-100 dark:bg-gray-700 dark:hover:bg-gray-600 dark:border-gray-600 hover:bg-gray-200
                    border border-gray-300 rounded-e-lg p-3 h-11 focus:ring-gray-100 dark:focus:ring-gray-700
-                   focus:ring-2 focus:outline-none">
+                   focus:ring-2 focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed">
             <svg class="w-3 h-3 text-gray-900 dark:text-white" aria-hidden="true" fill="none" viewBox="0 0 18 18">
                 <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 1v16M1 9h16"/>
             </svg>

@@ -18,6 +18,11 @@ class LoggableWidget extends Model
         'password',
         'api_token',
         'internal_note',
+        'meta',
+    ];
+
+    protected $casts = [
+        'meta' => 'array',
     ];
 
     protected $hidden = [

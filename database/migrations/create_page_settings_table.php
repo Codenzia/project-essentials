@@ -25,6 +25,7 @@ return new class extends Migration
             $table->id();
             $table->string('name');
             $table->string('page');
+            $table->string('scope')->default('');
             $table->json('settings')->default('{}');
             $table->json('order')->nullable();
             $table->boolean('is_default')->default(false);
@@ -32,6 +33,7 @@ return new class extends Migration
             $table->timestamps();
 
             $table->index('page');
+            $table->index(['page', 'scope']);
         });
     }
 

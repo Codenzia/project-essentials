@@ -13,6 +13,7 @@ class PageSettingPreset extends Model
     protected $fillable = [
         'name',
         'page',
+        'scope',
         'settings',
         'order',
         'is_default',
@@ -36,23 +37,25 @@ class PageSettingPreset extends Model
     }
 
     /**
-     * Get all presets for a specific page.
+     * Get all presets for a specific page + scope.
      */
-    public static function getForPage(string $page): Collection
+    public static function getForPage(string $page, ?string $scope = null): Collection
     {
         return static::query()
             ->where('page', $page)
+            ->where('scope', $scope ?? '')
             ->orderBy('name')
             ->get();
     }
 
     /**
-     * Get the default preset for a page (if any).
+     * Get the default preset for a page + scope (if any).
      */
-    public static function getDefaultForPage(string $page): ?static
+    public static function getDefaultForPage(string $page, ?string $scope = null): ?static
     {
         return static::query()
             ->where('page', $page)
+            ->where('scope', $scope ?? '')
             ->where('is_default', true)
             ->first();
     }

@@ -8,13 +8,13 @@
 
 <div class="flex items-center justify-center">
     <div
-        wire:key="{{ $this->getId() }}.table.record.{{ $recordKey }}.column.{{ $getName() }}.toggle-column.{{ $state ? 'true' : 'false' }}">
+        wire:key="{{ $this->getId() }}.table.record.{{ $getRecordKey() }}.column.{{ $getName() }}.toggle-column.{{ $isOn ? 'true' : 'false' }}">
         <div x-data="{
             state: @js($isOn),
             isLoading: false,
             error: undefined,
         }" wire:ignore
-            {{ $attributes->merge($getExtraAttributes(), escape: false)->class(['fi-ta-toggle']) }}>
+            {{ $getExtraAttributeBag()->class(['fi-ta-toggle']) }}>
 
             <button type="button" role="switch" aria-checked="false" x-bind:aria-checked="state.toString()"
                 @if (!$isDisabled) x-on:click.stop="
@@ -26,15 +26,15 @@
                         try {
                             const response = await $wire.updateTableColumnState(
                                 @js($getName()),
-                                @js($this->getId()),
+                                @js($getRecordKey()),
                                 newState,
                             );
 
-                            if (response?.error) {
-                                error = response.error;
+                            if (!response || response.error) {
+                                error = response?.error ?? @js(__('The state could not be saved.'));
                                 setTimeout(() => error = undefined, 3000);
                             } else {
-                                state = newState;
+                                state = typeof response.state === 'boolean' ? response.state : newState;
                                 error = undefined;
                             }
                         } catch (e) {

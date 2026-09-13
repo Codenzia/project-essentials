@@ -449,6 +449,17 @@ $this->deletePageSettingsPreset($presetId);
 
 When presets exist for a page, a "Load Preset" dropdown automatically appears at the top of the settings modal.
 
+Presets belong to a scope. By default that is the page's own
+`getPageSettingsScope()`, so a scoped page only lists, applies, saves and deletes
+presets of its own scope; override `getPageSettingsPresetScope()` to return
+`null` for presets shared by every scope of the page. Applying a preset restores
+both its values **and** its saved item order.
+
+Marking a preset default has a real effect: a user who has never saved settings
+for that page + scope is seeded from the default preset (values and order)
+instead of the bare defaults. Once the user saves their own settings, their row
+wins.
+
 #### Bulk Apply (Admin)
 
 Push settings to all users with a specific role or in a department:
@@ -457,8 +468,23 @@ Push settings to all users with a specific role or in a department:
 // Apply to all users with the "manager" role
 $this->applyPageSettingsToRole('manager');
 
-// Apply to all users in a department
-$this->applyPageSettingsToTeam(teamId: $departmentId, teamRelation: 'department_id');
+// Apply to every user in the team getPageSettingsTeamId() resolves
+$this->applyPageSettingsToTeam();
+```
+
+The team and the column it is matched on are both resolved on the server — the
+team id comes from `getPageSettingsTeamId()` and the column from
+`config('project-essentials.page_settings.team_column')`. Neither is accepted
+from the request, so an authorized manager cannot bulk-write settings for a team
+that is not theirs. Bulk apply is refused (403) while `getPageSettingsTeamId()`
+returns `null`. Both bulk methods write in chunks, so a large role or team
+cannot exhaust memory or the SQL binding limit.
+
+```php
+protected function getPageSettingsTeamId(): ?int
+{
+    return auth()->user()->department_id;
+}
 ```
 
 #### Reset to Defaults
@@ -500,8 +526,8 @@ When using `PageSettingDefinition`, defaults are automatically extracted from ea
 | `saveAsPageSettingsPreset(string $name, bool $isDefault)` | Save current config as a preset |
 | `applyPageSettingsPreset(int $presetId)` | Apply a preset |
 | `deletePageSettingsPreset(int $presetId)` | Delete a preset |
-| `applyPageSettingsToRole(string $role)` | Bulk-apply to role |
-| `applyPageSettingsToTeam(int $teamId, string $teamRelation)` | Bulk-apply to team |
+| `applyPageSettingsToRole(string $role)` | Bulk-apply to role (chunked) |
+| `applyPageSettingsToTeam()` | Bulk-apply to the server-resolved team (chunked) |
 
 #### Overridable Methods
 
@@ -510,6 +536,8 @@ When using `PageSettingDefinition`, defaults are automatically extracted from ea
 | `getPageSettingsFormSchema()` | `[]` | Define settings form fields |
 | `getPageSettingsDefaults()` | Auto from definitions | Default values |
 | `getPageSettingsScope()` | `null` | Scope key for per-context settings |
+| `getPageSettingsPresetScope()` | Page settings scope | Scope presets belong to; `null` shares them across scopes |
+| `getPageSettingsTeamId()` | `null` | Team that `applyPageSettingsToTeam()` writes to |
 | `pageSettingsLivePreview()` | `false` | Enable reactive live preview |
 | `onPageSettingPreviewUpdated($key, $value)` | no-op | Handle live preview changes |
 | `onPageSettingsUpdated(array $data)` | no-op | Hook after save |
@@ -540,6 +568,25 @@ class Invoice extends Model
 ```
 
 Requires an `activity_logs` table with columns: `user_id`, `model_id`, `model`, `current_data`, `new_data`, `description`, `created_at`, `updated_at`.
+
+#### Redaction
+
+Hidden attributes, `$activityLogExcept` keys and the built-in credential keys
+(`password`, `remember_token`, `two_factor_secret`, `two_factor_recovery_codes`,
+`api_token`) never reach the log as values. The **change itself is still
+recorded** — a password-only update logs a redacted event rather than
+disappearing — and sensitive keys nested inside a permitted array/JSON attribute
+are redacted too.
+
+#### Suppressing logging
+
+```php
+Invoice::withoutActivityLogging(fn () => $invoice->update([...]));
+```
+
+The previous suppression state is restored even when the callback throws, so a
+suppression cannot leak into the next job on a queue worker. Bulk query
+updates/deletes bypass Eloquent events entirely and are never logged.
 
 ### HasCreatedUpdatedViewComponent
 
@@ -640,7 +687,13 @@ use Codenzia\ProjectEssentials\Forms\Components\CounterInput;
 
 CounterInput::make('quantity')
     ->label('Quantity')
+    ->minValue(1)   // default: 0 — pass null to remove the bound
+    ->maxValue(99)  // default: unbounded
 ```
+
+The buttons and the number input are a convenience; the bounds are enforced
+server-side as a validation rule, so a crafted request cannot skip them. The
+field honours `disabled()` — both the input and the +/- buttons.
 
 ### DateTimePickerWithHint
 
@@ -1002,6 +1055,27 @@ StateSwitcher::make('status')
 | `offState(mixed)` | Value to set when toggled off (default: `'Inactive'`) |
 | `onLabel(string)` | Button label when on (default: `'Active'`) |
 | `offLabel(string)` | Button label when off (default: `'Inactive'`) |
+| `authorizeStateChangeUsing(?Closure)` | Host guard for the inline write — **required** |
+
+#### Authorizing the inline change
+
+An inline column write bypasses the resource policy: Filament only checks the
+column's `hidden()`/`disabled()` state before saving. `StateSwitcher` therefore
+**denies every change until the host registers a guard**, so a view-only user
+cannot flip a record by calling the Livewire method directly.
+
+```php
+StateSwitcher::make('status')
+    ->authorizeStateChangeUsing(fn (Model $record, mixed $state): bool =>
+        auth()->user()->can('update', $record)
+            && $record->canTransitionTo($state))
+```
+
+The callback receives `$record`, the `$state` about to be written and the
+`$column` name. Return `false` (or leave the guard unset) and the switch shows a
+refusal and snaps back to the stored value. Evaluate business transitions here
+too — being allowed to edit the record is not the same as the transition being
+valid right now.
 
 ---
 

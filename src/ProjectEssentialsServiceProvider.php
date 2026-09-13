@@ -130,6 +130,7 @@ class ProjectEssentialsServiceProvider extends PackageServiceProvider
         return [
             'create_page_settings_table',
             'create_activity_logs_table',
+            'add_scope_to_page_setting_presets_table',
         ];
     }
 }

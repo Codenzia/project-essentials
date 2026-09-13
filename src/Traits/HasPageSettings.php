@@ -8,12 +8,13 @@ use Codenzia\ProjectEssentials\Models\PageSetting;
 use Codenzia\ProjectEssentials\Models\PageSettingDefinition;
 use Codenzia\ProjectEssentials\Models\PageSettingPreset;
 use Filament\Actions\Action;
-use Filament\Forms\Components\Component;
 use Filament\Forms\Components\Select;
 use Filament\Notifications\Notification;
 use Filament\Schemas\Components\Actions as SchemaActions;
+use Filament\Schemas\Components\Component;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Components\Utilities\Set;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
@@ -40,6 +41,11 @@ use Illuminate\Support\Facades\Auth;
 trait HasPageSettings
 {
     /**
+     * How many users a bulk apply writes per query.
+     */
+    private const PAGE_SETTINGS_BULK_CHUNK = 500;
+
+    /**
      * In-memory cache of settings for the current request.
      */
     private ?array $resolvedPageSettings = null;
@@ -59,6 +65,26 @@ trait HasPageSettings
      * Override this method in your page to enable scoped settings.
      */
     protected function getPageSettingsScope(): ?string
+    {
+        return null;
+    }
+
+    /**
+     * Scope key that presets belong to. Defaults to the page settings scope, so a
+     * scoped page only ever sees, saves and deletes presets of its own scope.
+     * Override to return null for page-wide presets shared by every scope.
+     */
+    protected function getPageSettingsPresetScope(): ?string
+    {
+        return $this->getPageSettingsScope();
+    }
+
+    /**
+     * The team the current user may bulk-apply settings to. Resolved on the server —
+     * never accepted from the request. Bulk apply to a team is refused while this
+     * returns null.
+     */
+    protected function getPageSettingsTeamId(): ?int
     {
         return null;
     }
@@ -173,10 +199,22 @@ trait HasPageSettings
             $this->getPageSettingsScope()
         );
 
-        $stored = $record?->settings ?? [];
+        if ($record !== null) {
+            $stored = $record->settings ?? [];
+            $order = $record->order;
+        } else {
+            // No personal row yet — seed from the page's default preset, if one is marked.
+            $preset = PageSettingPreset::getDefaultForPage(
+                $this->normalizePageKey(),
+                $this->getPageSettingsPresetScope()
+            );
 
-        $this->resolvedPageSettings = array_merge($defaults, $stored);
-        $this->resolvedPageOrder = $record?->order;
+            $stored = $preset?->settings ?? [];
+            $order = $preset?->order;
+        }
+
+        $this->resolvedPageSettings = $this->mergePageSettings($defaults, $stored);
+        $this->resolvedPageOrder = $order;
 
         return $this->resolvedPageSettings;
     }
@@ -264,12 +302,20 @@ trait HasPageSettings
         $preset = PageSettingPreset::query()
             ->whereKey($presetId)
             ->where('page', $this->normalizePageKey())
+            ->where('scope', $this->getPageSettingsPresetScope() ?? '')
             ->first();
         if (! $preset) {
             return;
         }
 
-        $this->savePageSettings($preset->settings ?? []);
+        $settings = $preset->settings ?? [];
+
+        // Carry the preset's own item order across with its values.
+        if ($preset->order !== null) {
+            $settings['_order'] = $preset->order;
+        }
+
+        $this->savePageSettings($settings);
 
         Notification::make()
             ->success()
@@ -284,10 +330,13 @@ trait HasPageSettings
     {
         abort_unless($this->canManagePageSettingsPresets(), 403);
 
+        $presetScope = $this->getPageSettingsPresetScope() ?? '';
+
         if ($isDefault) {
-            // Remove existing default for this page
+            // Remove existing default for this page + scope
             PageSettingPreset::query()
                 ->where('page', $this->normalizePageKey())
+                ->where('scope', $presetScope)
                 ->where('is_default', true)
                 ->update(['is_default' => false]);
         }
@@ -295,6 +344,7 @@ trait HasPageSettings
         PageSettingPreset::create([
             'name' => $name,
             'page' => $this->normalizePageKey(),
+            'scope' => $presetScope,
             'settings' => $this->getPageSettingsData(),
             'order' => $this->getPageSettingsOrder(),
             'is_default' => $isDefault,
@@ -317,6 +367,7 @@ trait HasPageSettings
         PageSettingPreset::query()
             ->where('id', $presetId)
             ->where('page', $this->normalizePageKey())
+            ->where('scope', $this->getPageSettingsPresetScope() ?? '')
             ->delete();
 
         Notification::make()
@@ -340,56 +391,78 @@ trait HasPageSettings
             );
         }
 
-        $users = $userModel::role($role)->pluck('id');
-        $settings = $this->getPageSettingsData();
-        $order = $this->getPageSettingsOrder();
-        $page = $this->normalizePageKey();
-        $scope = $this->getPageSettingsScope();
-
-        $this->upsertPageSettingsForUsers($users, $page, $settings, $order, $scope);
+        $count = $this->upsertPageSettingsForQuery($userModel::role($role));
 
         Notification::make()
             ->success()
             ->title(__('Settings applied to :count users with role ":role".', [
-                'count' => $users->count(),
+                'count' => $count,
                 'role' => $role,
             ]))
             ->send();
     }
 
     /**
-     * Apply settings to all users in a department/team (admin bulk-apply).
+     * Apply settings to every user in the admin's own department/team (admin bulk-apply).
+     *
+     * The team is resolved server-side through getPageSettingsTeamId() and the column
+     * through config — neither is accepted from the request.
      */
-    public function applyPageSettingsToTeam(int $teamId, ?string $teamRelation = null): void
+    public function applyPageSettingsToTeam(): void
     {
         abort_unless($this->canManagePageSettingsPresets(), 403);
 
-        $teamRelation ??= config('project-essentials.page_settings.team_column', 'department_id');
+        $teamId = $this->getPageSettingsTeamId();
 
+        abort_if($teamId === null, 403);
+
+        $teamColumn = config('project-essentials.page_settings.team_column', 'department_id');
         $userModel = config('project-essentials.user_model', 'App\\Models\\User');
-        $users = $userModel::where($teamRelation, $teamId)->pluck('id');
-        $settings = $this->getPageSettingsData();
-        $order = $this->getPageSettingsOrder();
-        $page = $this->normalizePageKey();
-        $scope = $this->getPageSettingsScope();
 
-        $this->upsertPageSettingsForUsers($users, $page, $settings, $order, $scope);
+        $count = $this->upsertPageSettingsForQuery($userModel::query()->where($teamColumn, $teamId));
 
         Notification::make()
             ->success()
             ->title(__('Settings applied to :count team members.', [
-                'count' => $users->count(),
+                'count' => $count,
             ]))
             ->send();
     }
 
     /**
-     * Bulk-upsert the same settings/order for a collection of user ids in a single query.
+     * Bulk-upsert the current settings/order for every user the query matches, in
+     * chunks so a large role/team cannot exhaust memory or the SQL binding limit.
+     *
+     * @return int Number of users written to.
      */
-    private function upsertPageSettingsForUsers(Collection $userIds, string $page, array $settings, ?array $order, ?string $scope): void
+    private function upsertPageSettingsForQuery(Builder $query): int
+    {
+        $settings = $this->getPageSettingsData();
+        $order = $this->getPageSettingsOrder();
+        $page = $this->normalizePageKey();
+        $scope = $this->getPageSettingsScope();
+        $keyName = $query->getModel()->getKeyName();
+
+        $count = 0;
+
+        $query
+            ->select([$query->getModel()->getQualifiedKeyName()])
+            ->chunkById(self::PAGE_SETTINGS_BULK_CHUNK, function (Collection $users) use (&$count, $page, $settings, $order, $scope, $keyName): void {
+                $count += $this->upsertPageSettingsForUsers($users->pluck($keyName), $page, $settings, $order, $scope);
+            }, column: $keyName);
+
+        return $count;
+    }
+
+    /**
+     * Bulk-upsert the same settings/order for a collection of user ids in a single query.
+     *
+     * @return int Number of rows written.
+     */
+    private function upsertPageSettingsForUsers(Collection $userIds, string $page, array $settings, ?array $order, ?string $scope): int
     {
         if ($userIds->isEmpty()) {
-            return;
+            return 0;
         }
 
         $scope ??= '';
@@ -406,9 +479,36 @@ trait HasPageSettings
         ])->all();
 
         PageSetting::upsert($rows, ['user_id', 'page', 'scope'], ['settings', 'order', 'updated_at']);
+
+        return count($rows);
     }
 
     // ─── Internal Helpers ───────────────────────────────────
+
+    /**
+     * Merge stored settings over defaults recursively so a newly added nested default
+     * survives an older stored array. Lists are replaced wholesale, never appended.
+     */
+    private function mergePageSettings(array $defaults, array $stored): array
+    {
+        foreach ($stored as $key => $value) {
+            if (
+                is_array($value)
+                && ! array_is_list($value)
+                && isset($defaults[$key])
+                && is_array($defaults[$key])
+                && ! array_is_list($defaults[$key])
+            ) {
+                $defaults[$key] = $this->mergePageSettings($defaults[$key], $value);
+
+                continue;
+            }
+
+            $defaults[$key] = $value;
+        }
+
+        return $defaults;
+    }
 
     /**
      * Normalize page class name to a slug-safe key.
@@ -434,7 +534,7 @@ trait HasPageSettings
      */
     private function buildFormSchema(array $definitions): array
     {
-        $presets = PageSettingPreset::getForPage($this->normalizePageKey());
+        $presets = PageSettingPreset::getForPage($this->normalizePageKey(), $this->getPageSettingsPresetScope());
         $schema = [];
 
         // Preset selector (if any presets exist)
